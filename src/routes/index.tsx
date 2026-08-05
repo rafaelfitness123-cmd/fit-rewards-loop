@@ -48,7 +48,10 @@ function Login() {
     const cliente = getClientes().find(
       (c) => c.cpf.replace(/\D/g, "") === limpo && c.senha === senhaCliente,
     );
-    if (!cliente) return toast.error("CPF ou senha inválidos.");
+    if (!cliente) {
+      toast.error("CPF ou senha inválidos.");
+      return;
+    }
     setSessao({ tipo: "cliente", clienteId: cliente.id });
     navigate({ to: "/app" });
   };
@@ -56,8 +59,10 @@ function Login() {
   const entrarAdmin = (e: React.FormEvent) => {
     e.preventDefault();
     const admin = getAdmin();
-    if (usuario !== admin.usuario || senhaAdmin !== admin.senha)
-      return toast.error("Usuário ou senha inválidos.");
+    if (usuario !== admin.usuario || senhaAdmin !== admin.senha) {
+      toast.error("Usuário ou senha inválidos.");
+      return;
+    }
     setSessao({ tipo: "admin", usuario: admin.usuario });
     navigate({ to: "/admin" });
   };
