@@ -22,6 +22,7 @@ function AppLayout() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
   useEffect(() => {
+    finishHydration();
     seed();
     const s = getSessao();
     if (!s) navigate({ to: "/" });

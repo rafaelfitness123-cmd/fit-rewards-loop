@@ -36,6 +36,7 @@ function Login() {
   const [senhaAdmin, setSenhaAdmin] = useState("");
 
   useEffect(() => {
+    finishHydration();
     seed();
     const s = getSessao();
     if (s?.tipo === "cliente") navigate({ to: "/app" });
