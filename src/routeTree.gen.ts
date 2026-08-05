@@ -14,6 +14,7 @@ import { Route as AppRouteImport } from './routes/app'
 import { Route as AppIndexRouteImport } from './routes/app.index'
 import { Route as AppMissoesRouteImport } from './routes/app.missoes'
 import { Route as AppPontosRouteImport } from './routes/app.pontos'
+import { Route as AppRankingRouteImport } from './routes/app.ranking'
 import { Route as AppScanRouteImport } from './routes/app.scan'
 
 const IndexRoute = IndexRouteImport.update({
@@ -41,6 +42,11 @@ const AppPontosRoute = AppPontosRouteImport.update({
   path: '/pontos',
   getParentRoute: () => AppRoute,
 } as any)
+const AppRankingRoute = AppRankingRouteImport.update({
+  id: '/ranking',
+  path: '/ranking',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppScanRoute = AppScanRouteImport.update({
   id: '/scan',
   path: '/scan',
@@ -52,6 +58,7 @@ export interface FileRoutesByFullPath {
   '/app': typeof AppRouteWithChildren
   '/app/missoes': typeof AppMissoesRoute
   '/app/pontos': typeof AppPontosRoute
+  '/app/ranking': typeof AppRankingRoute
   '/app/scan': typeof AppScanRoute
   '/app/': typeof AppIndexRoute
 }
@@ -59,6 +66,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/app/missoes': typeof AppMissoesRoute
   '/app/pontos': typeof AppPontosRoute
+  '/app/ranking': typeof AppRankingRoute
   '/app/scan': typeof AppScanRoute
   '/app': typeof AppIndexRoute
 }
@@ -68,21 +76,30 @@ export interface FileRoutesById {
   '/app': typeof AppRouteWithChildren
   '/app/missoes': typeof AppMissoesRoute
   '/app/pontos': typeof AppPontosRoute
+  '/app/ranking': typeof AppRankingRoute
   '/app/scan': typeof AppScanRoute
   '/app/': typeof AppIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/app' | '/app/missoes' | '/app/pontos' | '/app/scan' | '/app/'
+    | '/'
+    | '/app'
+    | '/app/missoes'
+    | '/app/pontos'
+    | '/app/ranking'
+    | '/app/scan'
+    | '/app/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/app/missoes' | '/app/pontos' | '/app/scan' | '/app'
+  to:
+    '/' | '/app/missoes' | '/app/pontos' | '/app/ranking' | '/app/scan' | '/app'
   id:
     | '__root__'
     | '/'
     | '/app'
     | '/app/missoes'
     | '/app/pontos'
+    | '/app/ranking'
     | '/app/scan'
     | '/app/'
   fileRoutesById: FileRoutesById
@@ -129,6 +146,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppPontosRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/ranking': {
+      id: '/app/ranking'
+      path: '/ranking'
+      fullPath: '/app/ranking'
+      preLoaderRoute: typeof AppRankingRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/scan': {
       id: '/app/scan'
       path: '/scan'
@@ -142,6 +166,7 @@ declare module '@tanstack/react-router' {
 interface AppRouteChildren {
   AppMissoesRoute: typeof AppMissoesRoute
   AppPontosRoute: typeof AppPontosRoute
+  AppRankingRoute: typeof AppRankingRoute
   AppScanRoute: typeof AppScanRoute
   AppIndexRoute: typeof AppIndexRoute
 }
@@ -149,6 +174,7 @@ interface AppRouteChildren {
 const AppRouteChildren: AppRouteChildren = {
   AppMissoesRoute: AppMissoesRoute,
   AppPontosRoute: AppPontosRoute,
+  AppRankingRoute: AppRankingRoute,
   AppScanRoute: AppScanRoute,
   AppIndexRoute: AppIndexRoute,
 }
