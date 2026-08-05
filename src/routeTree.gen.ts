@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppRouteImport } from './routes/app'
 import { Route as AppIndexRouteImport } from './routes/app.index'
+import { Route as AppMissoesRouteImport } from './routes/app.missoes'
 import { Route as AppScanRouteImport } from './routes/app.scan'
 
 const IndexRoute = IndexRouteImport.update({
@@ -29,6 +30,11 @@ const AppIndexRoute = AppIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AppRoute,
 } as any)
+const AppMissoesRoute = AppMissoesRouteImport.update({
+  id: '/missoes',
+  path: '/missoes',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppScanRoute = AppScanRouteImport.update({
   id: '/scan',
   path: '/scan',
@@ -38,11 +44,13 @@ const AppScanRoute = AppScanRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
+  '/app/missoes': typeof AppMissoesRoute
   '/app/scan': typeof AppScanRoute
   '/app/': typeof AppIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/app/missoes': typeof AppMissoesRoute
   '/app/scan': typeof AppScanRoute
   '/app': typeof AppIndexRoute
 }
@@ -50,15 +58,16 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
+  '/app/missoes': typeof AppMissoesRoute
   '/app/scan': typeof AppScanRoute
   '/app/': typeof AppIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/app' | '/app/scan' | '/app/'
+  fullPaths: '/' | '/app' | '/app/missoes' | '/app/scan' | '/app/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/app/scan' | '/app'
-  id: '__root__' | '/' | '/app' | '/app/scan' | '/app/'
+  to: '/' | '/app/missoes' | '/app/scan' | '/app'
+  id: '__root__' | '/' | '/app' | '/app/missoes' | '/app/scan' | '/app/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -89,6 +98,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppIndexRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/missoes': {
+      id: '/app/missoes'
+      path: '/missoes'
+      fullPath: '/app/missoes'
+      preLoaderRoute: typeof AppMissoesRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/scan': {
       id: '/app/scan'
       path: '/scan'
@@ -100,11 +116,13 @@ declare module '@tanstack/react-router' {
 }
 
 interface AppRouteChildren {
+  AppMissoesRoute: typeof AppMissoesRoute
   AppScanRoute: typeof AppScanRoute
   AppIndexRoute: typeof AppIndexRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppMissoesRoute: AppMissoesRoute,
   AppScanRoute: AppScanRoute,
   AppIndexRoute: AppIndexRoute,
 }
