@@ -1,5 +1,12 @@
 import { useCallback, useEffect, useState } from "react";
-import { getClientes, getSessao, seed, setSessao, type Cliente } from "./db";
+import {
+  finishHydration,
+  getClientes,
+  getSessao,
+  seed,
+  setSessao,
+  type Cliente,
+} from "./db";
 
 /** Re-executa `selector` sempre que o localStorage do app muda. */
 export function useStore<T>(selector: () => T): [T, () => void] {
@@ -7,6 +14,7 @@ export function useStore<T>(selector: () => T): [T, () => void] {
   const refresh = useCallback(() => setValue(selector()), [selector]);
 
   useEffect(() => {
+    finishHydration();
     seed();
     setValue(selector());
     const handler = () => setValue(selector());
@@ -18,6 +26,7 @@ export function useStore<T>(selector: () => T): [T, () => void] {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
 
   return [value, refresh];
 }
