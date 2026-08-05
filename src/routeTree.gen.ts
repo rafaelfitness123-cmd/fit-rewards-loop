@@ -10,33 +10,251 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AdminRouteImport } from './routes/admin'
+import { Route as AppRouteImport } from './routes/app'
+import { Route as AdminIndexRouteImport } from './routes/admin.index'
+import { Route as AdminClientesRouteImport } from './routes/admin.clientes'
+import { Route as AdminConfiguracoesRouteImport } from './routes/admin.configuracoes'
+import { Route as AdminMissoesRouteImport } from './routes/admin.missoes'
+import { Route as AdminPontuacaoRouteImport } from './routes/admin.pontuacao'
+import { Route as AdminQrcodeRouteImport } from './routes/admin.qrcode'
+import { Route as AdminRankingRouteImport } from './routes/admin.ranking'
+import { Route as AdminRecompensasRouteImport } from './routes/admin.recompensas'
+import { Route as AdminResgatesRouteImport } from './routes/admin.resgates'
+import { Route as AdminTreinosRouteImport } from './routes/admin.treinos'
+import { Route as AppIndexRouteImport } from './routes/app.index'
+import { Route as AppMissoesRouteImport } from './routes/app.missoes'
+import { Route as AppPerfilRouteImport } from './routes/app.perfil'
+import { Route as AppPontosRouteImport } from './routes/app.pontos'
+import { Route as AppRankingRouteImport } from './routes/app.ranking'
+import { Route as AppScanRouteImport } from './routes/app.scan'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppRoute = AppRouteImport.update({
+  id: '/app',
+  path: '/app',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminClientesRoute = AdminClientesRouteImport.update({
+  id: '/clientes',
+  path: '/clientes',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminConfiguracoesRoute = AdminConfiguracoesRouteImport.update({
+  id: '/configuracoes',
+  path: '/configuracoes',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminMissoesRoute = AdminMissoesRouteImport.update({
+  id: '/missoes',
+  path: '/missoes',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminPontuacaoRoute = AdminPontuacaoRouteImport.update({
+  id: '/pontuacao',
+  path: '/pontuacao',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminQrcodeRoute = AdminQrcodeRouteImport.update({
+  id: '/qrcode',
+  path: '/qrcode',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminRankingRoute = AdminRankingRouteImport.update({
+  id: '/ranking',
+  path: '/ranking',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminRecompensasRoute = AdminRecompensasRouteImport.update({
+  id: '/recompensas',
+  path: '/recompensas',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminResgatesRoute = AdminResgatesRouteImport.update({
+  id: '/resgates',
+  path: '/resgates',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminTreinosRoute = AdminTreinosRouteImport.update({
+  id: '/treinos',
+  path: '/treinos',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AppIndexRoute = AppIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppMissoesRoute = AppMissoesRouteImport.update({
+  id: '/missoes',
+  path: '/missoes',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppPerfilRoute = AppPerfilRouteImport.update({
+  id: '/perfil',
+  path: '/perfil',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppPontosRoute = AppPontosRouteImport.update({
+  id: '/pontos',
+  path: '/pontos',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppRankingRoute = AppRankingRouteImport.update({
+  id: '/ranking',
+  path: '/ranking',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppScanRoute = AppScanRouteImport.update({
+  id: '/scan',
+  path: '/scan',
+  getParentRoute: () => AppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
+  '/app': typeof AppRouteWithChildren
+  '/admin/clientes': typeof AdminClientesRoute
+  '/admin/configuracoes': typeof AdminConfiguracoesRoute
+  '/admin/missoes': typeof AdminMissoesRoute
+  '/admin/pontuacao': typeof AdminPontuacaoRoute
+  '/admin/qrcode': typeof AdminQrcodeRoute
+  '/admin/ranking': typeof AdminRankingRoute
+  '/admin/recompensas': typeof AdminRecompensasRoute
+  '/admin/resgates': typeof AdminResgatesRoute
+  '/admin/treinos': typeof AdminTreinosRoute
+  '/app/missoes': typeof AppMissoesRoute
+  '/app/perfil': typeof AppPerfilRoute
+  '/app/pontos': typeof AppPontosRoute
+  '/app/ranking': typeof AppRankingRoute
+  '/app/scan': typeof AppScanRoute
+  '/admin/': typeof AdminIndexRoute
+  '/app/': typeof AppIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/admin/clientes': typeof AdminClientesRoute
+  '/admin/configuracoes': typeof AdminConfiguracoesRoute
+  '/admin/missoes': typeof AdminMissoesRoute
+  '/admin/pontuacao': typeof AdminPontuacaoRoute
+  '/admin/qrcode': typeof AdminQrcodeRoute
+  '/admin/ranking': typeof AdminRankingRoute
+  '/admin/recompensas': typeof AdminRecompensasRoute
+  '/admin/resgates': typeof AdminResgatesRoute
+  '/admin/treinos': typeof AdminTreinosRoute
+  '/app/missoes': typeof AppMissoesRoute
+  '/app/perfil': typeof AppPerfilRoute
+  '/app/pontos': typeof AppPontosRoute
+  '/app/ranking': typeof AppRankingRoute
+  '/app/scan': typeof AppScanRoute
+  '/admin': typeof AdminIndexRoute
+  '/app': typeof AppIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
+  '/app': typeof AppRouteWithChildren
+  '/admin/clientes': typeof AdminClientesRoute
+  '/admin/configuracoes': typeof AdminConfiguracoesRoute
+  '/admin/missoes': typeof AdminMissoesRoute
+  '/admin/pontuacao': typeof AdminPontuacaoRoute
+  '/admin/qrcode': typeof AdminQrcodeRoute
+  '/admin/ranking': typeof AdminRankingRoute
+  '/admin/recompensas': typeof AdminRecompensasRoute
+  '/admin/resgates': typeof AdminResgatesRoute
+  '/admin/treinos': typeof AdminTreinosRoute
+  '/app/missoes': typeof AppMissoesRoute
+  '/app/perfil': typeof AppPerfilRoute
+  '/app/pontos': typeof AppPontosRoute
+  '/app/ranking': typeof AppRankingRoute
+  '/app/scan': typeof AppScanRoute
+  '/admin/': typeof AdminIndexRoute
+  '/app/': typeof AppIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/admin'
+    | '/app'
+    | '/admin/clientes'
+    | '/admin/configuracoes'
+    | '/admin/missoes'
+    | '/admin/pontuacao'
+    | '/admin/qrcode'
+    | '/admin/ranking'
+    | '/admin/recompensas'
+    | '/admin/resgates'
+    | '/admin/treinos'
+    | '/app/missoes'
+    | '/app/perfil'
+    | '/app/pontos'
+    | '/app/ranking'
+    | '/app/scan'
+    | '/admin/'
+    | '/app/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/admin/clientes'
+    | '/admin/configuracoes'
+    | '/admin/missoes'
+    | '/admin/pontuacao'
+    | '/admin/qrcode'
+    | '/admin/ranking'
+    | '/admin/recompensas'
+    | '/admin/resgates'
+    | '/admin/treinos'
+    | '/app/missoes'
+    | '/app/perfil'
+    | '/app/pontos'
+    | '/app/ranking'
+    | '/app/scan'
+    | '/admin'
+    | '/app'
+  id:
+    | '__root__'
+    | '/'
+    | '/admin'
+    | '/app'
+    | '/admin/clientes'
+    | '/admin/configuracoes'
+    | '/admin/missoes'
+    | '/admin/pontuacao'
+    | '/admin/qrcode'
+    | '/admin/ranking'
+    | '/admin/recompensas'
+    | '/admin/resgates'
+    | '/admin/treinos'
+    | '/app/missoes'
+    | '/app/perfil'
+    | '/app/pontos'
+    | '/app/ranking'
+    | '/app/scan'
+    | '/admin/'
+    | '/app/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRoute: typeof AdminRouteWithChildren
+  AppRoute: typeof AppRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
@@ -48,22 +266,188 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/app': {
+      id: '/app'
+      path: '/app'
+      fullPath: '/app'
+      preLoaderRoute: typeof AppRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/': {
+      id: '/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/clientes': {
+      id: '/admin/clientes'
+      path: '/clientes'
+      fullPath: '/admin/clientes'
+      preLoaderRoute: typeof AdminClientesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/configuracoes': {
+      id: '/admin/configuracoes'
+      path: '/configuracoes'
+      fullPath: '/admin/configuracoes'
+      preLoaderRoute: typeof AdminConfiguracoesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/missoes': {
+      id: '/admin/missoes'
+      path: '/missoes'
+      fullPath: '/admin/missoes'
+      preLoaderRoute: typeof AdminMissoesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/pontuacao': {
+      id: '/admin/pontuacao'
+      path: '/pontuacao'
+      fullPath: '/admin/pontuacao'
+      preLoaderRoute: typeof AdminPontuacaoRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/qrcode': {
+      id: '/admin/qrcode'
+      path: '/qrcode'
+      fullPath: '/admin/qrcode'
+      preLoaderRoute: typeof AdminQrcodeRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/ranking': {
+      id: '/admin/ranking'
+      path: '/ranking'
+      fullPath: '/admin/ranking'
+      preLoaderRoute: typeof AdminRankingRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/recompensas': {
+      id: '/admin/recompensas'
+      path: '/recompensas'
+      fullPath: '/admin/recompensas'
+      preLoaderRoute: typeof AdminRecompensasRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/resgates': {
+      id: '/admin/resgates'
+      path: '/resgates'
+      fullPath: '/admin/resgates'
+      preLoaderRoute: typeof AdminResgatesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/treinos': {
+      id: '/admin/treinos'
+      path: '/treinos'
+      fullPath: '/admin/treinos'
+      preLoaderRoute: typeof AdminTreinosRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/app/': {
+      id: '/app/'
+      path: '/'
+      fullPath: '/app/'
+      preLoaderRoute: typeof AppIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/missoes': {
+      id: '/app/missoes'
+      path: '/missoes'
+      fullPath: '/app/missoes'
+      preLoaderRoute: typeof AppMissoesRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/perfil': {
+      id: '/app/perfil'
+      path: '/perfil'
+      fullPath: '/app/perfil'
+      preLoaderRoute: typeof AppPerfilRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/pontos': {
+      id: '/app/pontos'
+      path: '/pontos'
+      fullPath: '/app/pontos'
+      preLoaderRoute: typeof AppPontosRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/ranking': {
+      id: '/app/ranking'
+      path: '/ranking'
+      fullPath: '/app/ranking'
+      preLoaderRoute: typeof AppRankingRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/scan': {
+      id: '/app/scan'
+      path: '/scan'
+      fullPath: '/app/scan'
+      preLoaderRoute: typeof AppScanRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
+interface AdminRouteChildren {
+  AdminClientesRoute: typeof AdminClientesRoute
+  AdminConfiguracoesRoute: typeof AdminConfiguracoesRoute
+  AdminMissoesRoute: typeof AdminMissoesRoute
+  AdminPontuacaoRoute: typeof AdminPontuacaoRoute
+  AdminQrcodeRoute: typeof AdminQrcodeRoute
+  AdminRankingRoute: typeof AdminRankingRoute
+  AdminRecompensasRoute: typeof AdminRecompensasRoute
+  AdminResgatesRoute: typeof AdminResgatesRoute
+  AdminTreinosRoute: typeof AdminTreinosRoute
+  AdminIndexRoute: typeof AdminIndexRoute
+}
+
+const AdminRouteChildren: AdminRouteChildren = {
+  AdminClientesRoute: AdminClientesRoute,
+  AdminConfiguracoesRoute: AdminConfiguracoesRoute,
+  AdminMissoesRoute: AdminMissoesRoute,
+  AdminPontuacaoRoute: AdminPontuacaoRoute,
+  AdminQrcodeRoute: AdminQrcodeRoute,
+  AdminRankingRoute: AdminRankingRoute,
+  AdminRecompensasRoute: AdminRecompensasRoute,
+  AdminResgatesRoute: AdminResgatesRoute,
+  AdminTreinosRoute: AdminTreinosRoute,
+  AdminIndexRoute: AdminIndexRoute,
+}
+
+const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
+
+interface AppRouteChildren {
+  AppMissoesRoute: typeof AppMissoesRoute
+  AppPerfilRoute: typeof AppPerfilRoute
+  AppPontosRoute: typeof AppPontosRoute
+  AppRankingRoute: typeof AppRankingRoute
+  AppScanRoute: typeof AppScanRoute
+  AppIndexRoute: typeof AppIndexRoute
+}
+
+const AppRouteChildren: AppRouteChildren = {
+  AppMissoesRoute: AppMissoesRoute,
+  AppPerfilRoute: AppPerfilRoute,
+  AppPontosRoute: AppPontosRoute,
+  AppRankingRoute: AppRankingRoute,
+  AppScanRoute: AppScanRoute,
+  AppIndexRoute: AppIndexRoute,
+}
+
+const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRoute: AdminRouteWithChildren,
+  AppRoute: AppRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
