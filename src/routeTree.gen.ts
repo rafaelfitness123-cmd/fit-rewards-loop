@@ -19,6 +19,7 @@ import { Route as AdminMissoesRouteImport } from './routes/admin.missoes'
 import { Route as AdminPontuacaoRouteImport } from './routes/admin.pontuacao'
 import { Route as AdminQrcodeRouteImport } from './routes/admin.qrcode'
 import { Route as AdminRecompensasRouteImport } from './routes/admin.recompensas'
+import { Route as AdminResgatesRouteImport } from './routes/admin.resgates'
 import { Route as AppIndexRouteImport } from './routes/app.index'
 import { Route as AppMissoesRouteImport } from './routes/app.missoes'
 import { Route as AppPerfilRouteImport } from './routes/app.perfil'
@@ -76,6 +77,11 @@ const AdminRecompensasRoute = AdminRecompensasRouteImport.update({
   path: '/recompensas',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminResgatesRoute = AdminResgatesRouteImport.update({
+  id: '/resgates',
+  path: '/resgates',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AppIndexRoute = AppIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -117,6 +123,7 @@ export interface FileRoutesByFullPath {
   '/admin/pontuacao': typeof AdminPontuacaoRoute
   '/admin/qrcode': typeof AdminQrcodeRoute
   '/admin/recompensas': typeof AdminRecompensasRoute
+  '/admin/resgates': typeof AdminResgatesRoute
   '/app/missoes': typeof AppMissoesRoute
   '/app/perfil': typeof AppPerfilRoute
   '/app/pontos': typeof AppPontosRoute
@@ -133,6 +140,7 @@ export interface FileRoutesByTo {
   '/admin/pontuacao': typeof AdminPontuacaoRoute
   '/admin/qrcode': typeof AdminQrcodeRoute
   '/admin/recompensas': typeof AdminRecompensasRoute
+  '/admin/resgates': typeof AdminResgatesRoute
   '/app/missoes': typeof AppMissoesRoute
   '/app/perfil': typeof AppPerfilRoute
   '/app/pontos': typeof AppPontosRoute
@@ -152,6 +160,7 @@ export interface FileRoutesById {
   '/admin/pontuacao': typeof AdminPontuacaoRoute
   '/admin/qrcode': typeof AdminQrcodeRoute
   '/admin/recompensas': typeof AdminRecompensasRoute
+  '/admin/resgates': typeof AdminResgatesRoute
   '/app/missoes': typeof AppMissoesRoute
   '/app/perfil': typeof AppPerfilRoute
   '/app/pontos': typeof AppPontosRoute
@@ -172,6 +181,7 @@ export interface FileRouteTypes {
     | '/admin/pontuacao'
     | '/admin/qrcode'
     | '/admin/recompensas'
+    | '/admin/resgates'
     | '/app/missoes'
     | '/app/perfil'
     | '/app/pontos'
@@ -188,6 +198,7 @@ export interface FileRouteTypes {
     | '/admin/pontuacao'
     | '/admin/qrcode'
     | '/admin/recompensas'
+    | '/admin/resgates'
     | '/app/missoes'
     | '/app/perfil'
     | '/app/pontos'
@@ -206,6 +217,7 @@ export interface FileRouteTypes {
     | '/admin/pontuacao'
     | '/admin/qrcode'
     | '/admin/recompensas'
+    | '/admin/resgates'
     | '/app/missoes'
     | '/app/perfil'
     | '/app/pontos'
@@ -293,6 +305,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminRecompensasRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/resgates': {
+      id: '/admin/resgates'
+      path: '/resgates'
+      fullPath: '/admin/resgates'
+      preLoaderRoute: typeof AdminResgatesRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/app/': {
       id: '/app/'
       path: '/'
@@ -345,6 +364,7 @@ interface AdminRouteChildren {
   AdminPontuacaoRoute: typeof AdminPontuacaoRoute
   AdminQrcodeRoute: typeof AdminQrcodeRoute
   AdminRecompensasRoute: typeof AdminRecompensasRoute
+  AdminResgatesRoute: typeof AdminResgatesRoute
   AdminIndexRoute: typeof AdminIndexRoute
 }
 
@@ -355,6 +375,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminPontuacaoRoute: AdminPontuacaoRoute,
   AdminQrcodeRoute: AdminQrcodeRoute,
   AdminRecompensasRoute: AdminRecompensasRoute,
+  AdminResgatesRoute: AdminResgatesRoute,
   AdminIndexRoute: AdminIndexRoute,
 }
 
