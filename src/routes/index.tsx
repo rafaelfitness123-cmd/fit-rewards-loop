@@ -5,7 +5,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { getAdmin, getClientes, getSessao, seed, setSessao } from "@/lib/db";
+import {
+  finishHydration,
+  getAdmin,
+  getClientes,
+  getSessao,
+  seed,
+  setSessao,
+} from "@/lib/db";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/")({

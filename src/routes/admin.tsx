@@ -15,7 +15,7 @@ import {
   Users,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { getSessao, seed } from "@/lib/db";
+import { finishHydration, getSessao, seed } from "@/lib/db";
 import { logout, useSessao } from "@/lib/session";
 
 export const Route = createFileRoute("/admin")({
