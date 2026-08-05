@@ -132,8 +132,18 @@ export type Sessao =
 
 const isBrowser = () => typeof window !== "undefined";
 
+/**
+ * Durante a primeira renderização no cliente devolvemos os mesmos valores que o
+ * servidor usou (os fallbacks), evitando divergência de hidratação. Depois que
+ * o app monta, `finishHydration()` libera a leitura real do localStorage.
+ */
+let hydrating = true;
+export const finishHydration = () => {
+  hydrating = false;
+};
+
 export function read<T>(key: string, fallback: T): T {
-  if (!isBrowser()) return fallback;
+  if (!isBrowser() || hydrating) return fallback;
   try {
     const raw = window.localStorage.getItem(key);
     if (!raw) return fallback;
@@ -142,6 +152,7 @@ export function read<T>(key: string, fallback: T): T {
     return fallback;
   }
 }
+
 
 export function write<T>(key: string, value: T) {
   if (!isBrowser()) return;
