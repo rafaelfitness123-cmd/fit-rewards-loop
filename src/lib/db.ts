@@ -24,7 +24,7 @@ export type Cliente = {
   nome: string;
   cpf: string;
   senha: string;
-  avatar?: string;
+  avatar?: string | undefined;
   criadoEm: string;
 };
 
