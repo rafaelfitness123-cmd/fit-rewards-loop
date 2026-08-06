@@ -35,13 +35,8 @@ export const Route = createFileRoute("/app/scan")({
 
 function Scan() {
   const cliente = useClienteAtual();
-  const [aberto] = useStore(() => {
-    const s = JSON.parse(
-      (typeof window !== "undefined" && window.localStorage.getItem("academia_sessao")) ||
-        "null",
-    );
-    return s?.clienteId ? treinoAberto(s.clienteId) : null;
-  });
+  const id = cliente?.id;
+  const [aberto, atualizar] = useStore(() => (id ? treinoAberto(id) : null));
   const [codigo, setCodigo] = useState("");
   const [resultado, setResultado] = useState<ScanResultado | null>(null);
 
@@ -52,6 +47,7 @@ function Scan() {
     setResultado(r);
     if (r.ok) toast.success(r.mensagem);
     else toast.error(r.mensagem);
+    atualizar();
     setCodigo("");
   };
 
