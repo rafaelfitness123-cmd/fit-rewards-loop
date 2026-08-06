@@ -1,5 +1,7 @@
 import {
   getConfig,
+  getCorridas,
+  setCorridas,
   getConfigDias,
   getHistorico,
   getMissoes,
@@ -15,6 +17,7 @@ import {
   type HistoricoPonto,
   type Missao,
   type ProgressoMissao,
+  type Corrida,
   type Treino,
 } from "./db";
 
@@ -178,6 +181,7 @@ export function progressoDaMissao(
       missaoId: m.id,
       periodo,
       progresso: calculado,
+      aceita: m.objetivo !== "distancia",
       concluida: calculado >= m.quantidade,
       concedida: false,
       atualizadoEm: new Date().toISOString(),
@@ -189,6 +193,21 @@ function calcularProgresso(clienteId: string, m: Missao, ref: Date) {
   const inicio = inicioDoPeriodo(m, ref);
   const limiteInicio = m.inicio ? new Date(`${m.inicio}T00:00:00`) : null;
   const limiteFim = m.fim ? new Date(`${m.fim}T23:59:59`) : null;
+
+  if (m.objetivo === "distancia") {
+    let metros = 0;
+    for (const c of getCorridas()) {
+      if (c.clienteId !== clienteId) continue;
+      if (c.missaoId !== m.id) continue;
+      const d = new Date(c.iniciadaEm);
+      if (inicio && d < inicio) continue;
+      if (limiteInicio && d < limiteInicio) continue;
+      if (limiteFim && d > limiteFim) continue;
+      metros += c.distanciaM;
+    }
+    return Math.round((metros / 1000) * 100) / 100;
+  }
+
   const dias = new Set<string>();
   for (const t of treinosDe(clienteId)) {
     const d = new Date(t.entrada);
@@ -211,9 +230,11 @@ export function avaliarMissoes(clienteId: string): string[] {
     if (!missaoVigente(m, ref)) continue;
     const periodo = periodoDaMissao(m, ref);
     const id = `${clienteId}|${m.id}|${periodo}`;
-    const valor = calcularProgresso(clienteId, m, ref);
     const idx = progressos.findIndex((p) => p.id === id);
     const anterior = idx >= 0 ? progressos[idx] : null;
+    // Missões de distância só contam depois que o aluno aceita o desafio.
+    if (m.objetivo === "distancia" && !anterior?.aceita) continue;
+    const valor = calcularProgresso(clienteId, m, ref);
     const concluida = valor >= m.quantidade;
     const jaConcedida = anterior?.concedida ?? false;
     const registro: ProgressoMissao = {
@@ -222,6 +243,7 @@ export function avaliarMissoes(clienteId: string): string[] {
       missaoId: m.id,
       periodo,
       progresso: Math.min(valor, m.quantidade),
+      aceita: anterior?.aceita ?? m.objetivo !== "distancia",
       concluida,
       concedida: jaConcedida || (concluida && m.pontos > 0),
       atualizadoEm: new Date().toISOString(),
@@ -370,3 +392,74 @@ export const fmtDataHora = (iso: string) =>
 
 export const fmtHora = (iso: string) =>
   new Date(iso).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+
+// ---------- missões de corrida (GPS) ----------
+export function missaoAceita(clienteId: string, m: Missao) {
+  return progressoDaMissao(clienteId, m).aceita;
+}
+
+/** Marca a missão como aceita pelo aluno (necessário para missões de distância). */
+export function aceitarMissao(clienteId: string, m: Missao) {
+  const ref = new Date();
+  const periodo = periodoDaMissao(m, ref);
+  const id = `${clienteId}|${m.id}|${periodo}`;
+  const progressos = getProgressos();
+  const idx = progressos.findIndex((p) => p.id === id);
+  const base: ProgressoMissao = progressos[idx] ?? {
+    id,
+    clienteId,
+    missaoId: m.id,
+    periodo,
+    progresso: 0,
+    aceita: false,
+    concluida: false,
+    concedida: false,
+    atualizadoEm: ref.toISOString(),
+  };
+  const atualizado = { ...base, aceita: true, atualizadoEm: ref.toISOString() };
+  if (idx >= 0) progressos[idx] = atualizado;
+  else progressos.push(atualizado);
+  setProgressos([...progressos]);
+}
+
+/** Distância em metros entre dois pontos GPS (fórmula de Haversine). */
+export function distanciaEntre(
+  a: { lat: number; lng: number },
+  b: { lat: number; lng: number },
+) {
+  const R = 6371000;
+  const rad = (v: number) => (v * Math.PI) / 180;
+  const dLat = rad(b.lat - a.lat);
+  const dLng = rad(b.lng - a.lng);
+  const s =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(rad(a.lat)) * Math.cos(rad(b.lat)) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(s));
+}
+
+/** Salva a corrida concluída e reavalia as missões do aluno. */
+export function registrarCorrida(
+  clienteId: string,
+  missaoId: string | null,
+  distanciaM: number,
+  duracaoS: number,
+): string[] {
+  const corrida: Corrida = {
+    id: uid(),
+    clienteId,
+    missaoId,
+    distanciaM: Math.round(distanciaM),
+    duracaoS: Math.round(duracaoS),
+    iniciadaEm: new Date(Date.now() - duracaoS * 1000).toISOString(),
+    finalizadaEm: new Date().toISOString(),
+  };
+  setCorridas([corrida, ...getCorridas()]);
+  return avaliarMissoes(clienteId);
+}
+
+export function corridasDe(clienteId: string) {
+  return getCorridas().filter((c) => c.clienteId === clienteId);
+}
+
+export const fmtDistancia = (metros: number) =>
+  metros >= 1000 ? `${(metros / 1000).toFixed(2)} km` : `${Math.round(metros)} m`;
