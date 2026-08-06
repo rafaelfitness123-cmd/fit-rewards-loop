@@ -204,7 +204,9 @@ export const cache: Cache = {
 const ouvintes = new Set<() => void>();
 export function inscrever(fn: () => void) {
   ouvintes.add(fn);
-  return () => ouvintes.delete(fn);
+  return () => {
+    ouvintes.delete(fn);
+  };
 }
 export function notificar() {
   ouvintes.forEach((fn) => fn());
