@@ -14,16 +14,387 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      avisos: {
+        Row: {
+          data: string
+          destaque: boolean
+          id: string
+          texto: string
+          titulo: string
+        }
+        Insert: {
+          data?: string
+          destaque?: boolean
+          id?: string
+          texto?: string
+          titulo: string
+        }
+        Update: {
+          data?: string
+          destaque?: boolean
+          id?: string
+          texto?: string
+          titulo?: string
+        }
+        Relationships: []
+      }
+      config: {
+        Row: {
+          atualizado_em: string
+          dados: Json
+          id: string
+        }
+        Insert: {
+          atualizado_em?: string
+          dados?: Json
+          id: string
+        }
+        Update: {
+          atualizado_em?: string
+          dados?: Json
+          id?: string
+        }
+        Relationships: []
+      }
+      corridas: {
+        Row: {
+          cliente_id: string
+          distancia_m: number
+          duracao_s: number
+          finalizada_em: string | null
+          id: string
+          iniciada_em: string
+          missao_id: string | null
+        }
+        Insert: {
+          cliente_id: string
+          distancia_m?: number
+          duracao_s?: number
+          finalizada_em?: string | null
+          id?: string
+          iniciada_em?: string
+          missao_id?: string | null
+        }
+        Update: {
+          cliente_id?: string
+          distancia_m?: number
+          duracao_s?: number
+          finalizada_em?: string | null
+          id?: string
+          iniciada_em?: string
+          missao_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "corridas_missao_id_fkey"
+            columns: ["missao_id"]
+            isOneToOne: false
+            referencedRelation: "missoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      historico_pontos: {
+        Row: {
+          cliente_id: string
+          data: string
+          delta: number
+          id: string
+          motivo: string
+        }
+        Insert: {
+          cliente_id: string
+          data?: string
+          delta?: number
+          id?: string
+          motivo?: string
+        }
+        Update: {
+          cliente_id?: string
+          data?: string
+          delta?: number
+          id?: string
+          motivo?: string
+        }
+        Relationships: []
+      }
+      missoes: {
+        Row: {
+          ativa: boolean
+          criado_em: string
+          descricao: string
+          dia_semana: number | null
+          fim: string | null
+          id: string
+          inicio: string | null
+          nome: string
+          objetivo: string
+          pontos: number
+          quantidade: number
+          tipo: string
+        }
+        Insert: {
+          ativa?: boolean
+          criado_em?: string
+          descricao?: string
+          dia_semana?: number | null
+          fim?: string | null
+          id?: string
+          inicio?: string | null
+          nome: string
+          objetivo?: string
+          pontos?: number
+          quantidade?: number
+          tipo?: string
+        }
+        Update: {
+          ativa?: boolean
+          criado_em?: string
+          descricao?: string
+          dia_semana?: number | null
+          fim?: string | null
+          id?: string
+          inicio?: string | null
+          nome?: string
+          objetivo?: string
+          pontos?: number
+          quantidade?: number
+          tipo?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar: string | null
+          cpf: string | null
+          criado_em: string
+          id: string
+          nome: string
+          pontos: number
+        }
+        Insert: {
+          avatar?: string | null
+          cpf?: string | null
+          criado_em?: string
+          id: string
+          nome?: string
+          pontos?: number
+        }
+        Update: {
+          avatar?: string | null
+          cpf?: string | null
+          criado_em?: string
+          id?: string
+          nome?: string
+          pontos?: number
+        }
+        Relationships: []
+      }
+      progresso_missoes: {
+        Row: {
+          aceita: boolean
+          atualizado_em: string
+          cliente_id: string
+          concedida: boolean
+          concluida: boolean
+          id: string
+          missao_id: string
+          periodo: string
+          progresso: number
+        }
+        Insert: {
+          aceita?: boolean
+          atualizado_em?: string
+          cliente_id: string
+          concedida?: boolean
+          concluida?: boolean
+          id?: string
+          missao_id: string
+          periodo: string
+          progresso?: number
+        }
+        Update: {
+          aceita?: boolean
+          atualizado_em?: string
+          cliente_id?: string
+          concedida?: boolean
+          concluida?: boolean
+          id?: string
+          missao_id?: string
+          periodo?: string
+          progresso?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "progresso_missoes_missao_id_fkey"
+            columns: ["missao_id"]
+            isOneToOne: false
+            referencedRelation: "missoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      qrcodes: {
+        Row: {
+          ativo: boolean
+          codigo: string
+          criado_em: string
+          expira_em: string | null
+          id: string
+          nome: string
+        }
+        Insert: {
+          ativo?: boolean
+          codigo: string
+          criado_em?: string
+          expira_em?: string | null
+          id?: string
+          nome?: string
+        }
+        Update: {
+          ativo?: boolean
+          codigo?: string
+          criado_em?: string
+          expira_em?: string | null
+          id?: string
+          nome?: string
+        }
+        Relationships: []
+      }
+      recompensas: {
+        Row: {
+          ativa: boolean
+          criado_em: string
+          descricao: string
+          id: string
+          nome: string
+          pontos: number
+          quantidade: number
+        }
+        Insert: {
+          ativa?: boolean
+          criado_em?: string
+          descricao?: string
+          id?: string
+          nome: string
+          pontos?: number
+          quantidade?: number
+        }
+        Update: {
+          ativa?: boolean
+          criado_em?: string
+          descricao?: string
+          id?: string
+          nome?: string
+          pontos?: number
+          quantidade?: number
+        }
+        Relationships: []
+      }
+      resgates: {
+        Row: {
+          cliente_id: string
+          cliente_nome: string
+          data: string
+          id: string
+          pontos: number
+          recompensa_id: string | null
+          recompensa_nome: string
+          status: string
+        }
+        Insert: {
+          cliente_id: string
+          cliente_nome?: string
+          data?: string
+          id?: string
+          pontos?: number
+          recompensa_id?: string | null
+          recompensa_nome?: string
+          status?: string
+        }
+        Update: {
+          cliente_id?: string
+          cliente_nome?: string
+          data?: string
+          id?: string
+          pontos?: number
+          recompensa_id?: string | null
+          recompensa_nome?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "resgates_recompensa_id_fkey"
+            columns: ["recompensa_id"]
+            isOneToOne: false
+            referencedRelation: "recompensas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      treinos: {
+        Row: {
+          cliente_id: string
+          entrada: string
+          id: string
+          pontos_concedidos: boolean
+          pontos_entrada: number
+          pontos_saida: number
+          saida: string | null
+        }
+        Insert: {
+          cliente_id: string
+          entrada?: string
+          id?: string
+          pontos_concedidos?: boolean
+          pontos_entrada?: number
+          pontos_saida?: number
+          saida?: string | null
+        }
+        Update: {
+          cliente_id?: string
+          entrada?: string
+          id?: string
+          pontos_concedidos?: boolean
+          pontos_entrada?: number
+          pontos_saida?: number
+          saida?: string | null
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "cliente"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +521,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "cliente"],
+    },
   },
 } as const
