@@ -13,15 +13,9 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import {
-  getClientes,
-  getPontos,
-  setClientes,
-  setPontos,
-  uid,
-  type Cliente,
-} from "@/lib/db";
-import { useStore } from "@/lib/session";
+import { getClientes, getPontos, setClientes, type Cliente } from "@/lib/db";
+import { recarregar, useStore } from "@/lib/session";
+import { atualizarSenhaCliente, criarCliente, excluirCliente } from "@/lib/contas.functions";
 import { sequenciaAtual, treinosDe } from "@/lib/gamificacao";
 
 export const Route = createFileRoute("/admin/clientes")({
@@ -65,14 +59,16 @@ function ClientesAdmin() {
 
   const abrirEdicao = (c: Cliente) => {
     setEditando(c);
-    setForm({ nome: c.nome, cpf: c.cpf, senha: c.senha, avatar: c.avatar ?? "" });
+    setForm({ nome: c.nome, cpf: c.cpf, senha: "", avatar: c.avatar ?? "" });
     setAberto(true);
   };
 
-  const salvar = () => {
+  const [salvando, setSalvando] = useState(false);
+
+  const salvar = async () => {
     const cpf = form.cpf.replace(/\D/g, "");
-    if (!form.nome.trim() || !cpf || !form.senha) {
-      toast.error("Preencha nome, CPF e senha.");
+    if (!form.nome.trim() || !cpf) {
+      toast.error("Preencha nome e CPF.");
       return;
     }
     const clientes = getClientes();
@@ -80,41 +76,55 @@ function ClientesAdmin() {
       toast.error("Já existe um cliente com este CPF.");
       return;
     }
-    if (editando) {
-      setClientes(
-        clientes.map((c) =>
-          c.id === editando.id
-            ? { ...c, nome: form.nome.trim(), cpf, senha: form.senha, avatar: form.avatar }
-            : c,
-        ),
-      );
-      toast.success("Cliente atualizado.");
-    } else {
-      const novo: Cliente = {
-        id: uid(),
-        nome: form.nome.trim(),
-        cpf,
-        senha: form.senha,
-        avatar: form.avatar || undefined,
-        criadoEm: new Date().toISOString(),
-      };
-      setClientes([...clientes, novo]);
-      const pontos = getPontos();
-      pontos[novo.id] = pontos[novo.id] ?? 0;
-      setPontos(pontos);
-      toast.success("Cliente cadastrado.");
+    setSalvando(true);
+    try {
+      if (editando) {
+        setClientes(
+          clientes.map((c) =>
+            c.id === editando.id
+              ? { ...c, nome: form.nome.trim(), cpf, avatar: form.avatar }
+              : c,
+          ),
+        );
+        if (form.senha) {
+          await atualizarSenhaCliente({ data: { id: editando.id, senha: form.senha } });
+        }
+        toast.success("Cliente atualizado.");
+      } else {
+        if (form.senha.length < 6) {
+          toast.error("A senha do aluno precisa ter ao menos 6 caracteres.");
+          setSalvando(false);
+          return;
+        }
+        await criarCliente({
+          data: {
+            nome: form.nome.trim(),
+            cpf,
+            senha: form.senha,
+            avatar: form.avatar || undefined,
+          },
+        });
+        await recarregar();
+        toast.success("Cliente cadastrado. Ele entra com CPF e senha.");
+      }
+      setAberto(false);
+      refresh();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Não foi possível salvar o aluno.");
+    } finally {
+      setSalvando(false);
     }
-    setAberto(false);
-    refresh();
   };
 
-  const excluir = (id: string) => {
-    setClientes(getClientes().filter((c) => c.id !== id));
-    const pontos = getPontos();
-    delete pontos[id];
-    setPontos(pontos);
-    refresh();
-    toast.success("Cliente removido.");
+  const excluir = async (id: string) => {
+    try {
+      await excluirCliente({ data: { id } });
+      await recarregar();
+      refresh();
+      toast.success("Cliente removido.");
+    } catch {
+      toast.error("Não foi possível remover o aluno.");
+    }
   };
 
   return (
@@ -151,7 +161,7 @@ function ClientesAdmin() {
                 />
               </div>
               <div className="space-y-2">
-                <Label>Senha</Label>
+                <Label>{editando ? "Nova senha (opcional)" : "Senha (mín. 6)"}</Label>
                 <Input
                   value={form.senha}
                   onChange={(e) => setForm({ ...form, senha: e.target.value })}
@@ -166,8 +176,8 @@ function ClientesAdmin() {
               </div>
             </div>
             <DialogFooter>
-              <Button className="font-bold" onClick={salvar}>
-                Salvar
+              <Button className="font-bold" onClick={() => void salvar()} disabled={salvando}>
+                {salvando ? "Salvando..." : "Salvar"}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -186,7 +196,7 @@ function ClientesAdmin() {
             <Button variant="ghost" size="icon" onClick={() => abrirEdicao(c)}>
               <Pencil className="size-4" />
             </Button>
-            <Button variant="ghost" size="icon" onClick={() => excluir(c.id)}>
+            <Button variant="ghost" size="icon" onClick={() => void excluir(c.id)}>
               <Trash2 className="size-4 text-destructive" />
             </Button>
           </div>
