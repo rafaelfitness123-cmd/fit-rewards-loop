@@ -23,6 +23,7 @@ import { Route as AdminRecompensasRouteImport } from './routes/admin.recompensas
 import { Route as AdminResgatesRouteImport } from './routes/admin.resgates'
 import { Route as AdminTreinosRouteImport } from './routes/admin.treinos'
 import { Route as AppIndexRouteImport } from './routes/app.index'
+import { Route as AppCorridaRouteImport } from './routes/app.corrida'
 import { Route as AppMissoesRouteImport } from './routes/app.missoes'
 import { Route as AppPerfilRouteImport } from './routes/app.perfil'
 import { Route as AppPontosRouteImport } from './routes/app.pontos'
@@ -99,6 +100,11 @@ const AppIndexRoute = AppIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AppRoute,
 } as any)
+const AppCorridaRoute = AppCorridaRouteImport.update({
+  id: '/corrida',
+  path: '/corrida',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppMissoesRoute = AppMissoesRouteImport.update({
   id: '/missoes',
   path: '/missoes',
@@ -138,6 +144,7 @@ export interface FileRoutesByFullPath {
   '/admin/recompensas': typeof AdminRecompensasRoute
   '/admin/resgates': typeof AdminResgatesRoute
   '/admin/treinos': typeof AdminTreinosRoute
+  '/app/corrida': typeof AppCorridaRoute
   '/app/missoes': typeof AppMissoesRoute
   '/app/perfil': typeof AppPerfilRoute
   '/app/pontos': typeof AppPontosRoute
@@ -157,6 +164,7 @@ export interface FileRoutesByTo {
   '/admin/recompensas': typeof AdminRecompensasRoute
   '/admin/resgates': typeof AdminResgatesRoute
   '/admin/treinos': typeof AdminTreinosRoute
+  '/app/corrida': typeof AppCorridaRoute
   '/app/missoes': typeof AppMissoesRoute
   '/app/perfil': typeof AppPerfilRoute
   '/app/pontos': typeof AppPontosRoute
@@ -179,6 +187,7 @@ export interface FileRoutesById {
   '/admin/recompensas': typeof AdminRecompensasRoute
   '/admin/resgates': typeof AdminResgatesRoute
   '/admin/treinos': typeof AdminTreinosRoute
+  '/app/corrida': typeof AppCorridaRoute
   '/app/missoes': typeof AppMissoesRoute
   '/app/perfil': typeof AppPerfilRoute
   '/app/pontos': typeof AppPontosRoute
@@ -202,6 +211,7 @@ export interface FileRouteTypes {
     | '/admin/recompensas'
     | '/admin/resgates'
     | '/admin/treinos'
+    | '/app/corrida'
     | '/app/missoes'
     | '/app/perfil'
     | '/app/pontos'
@@ -221,6 +231,7 @@ export interface FileRouteTypes {
     | '/admin/recompensas'
     | '/admin/resgates'
     | '/admin/treinos'
+    | '/app/corrida'
     | '/app/missoes'
     | '/app/perfil'
     | '/app/pontos'
@@ -242,6 +253,7 @@ export interface FileRouteTypes {
     | '/admin/recompensas'
     | '/admin/resgates'
     | '/admin/treinos'
+    | '/app/corrida'
     | '/app/missoes'
     | '/app/perfil'
     | '/app/pontos'
@@ -357,6 +369,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppIndexRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/corrida': {
+      id: '/app/corrida'
+      path: '/corrida'
+      fullPath: '/app/corrida'
+      preLoaderRoute: typeof AppCorridaRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/missoes': {
       id: '/app/missoes'
       path: '/missoes'
@@ -424,6 +443,7 @@ const AdminRouteChildren: AdminRouteChildren = {
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
 interface AppRouteChildren {
+  AppCorridaRoute: typeof AppCorridaRoute
   AppMissoesRoute: typeof AppMissoesRoute
   AppPerfilRoute: typeof AppPerfilRoute
   AppPontosRoute: typeof AppPontosRoute
@@ -433,6 +453,7 @@ interface AppRouteChildren {
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppCorridaRoute: AppCorridaRoute,
   AppMissoesRoute: AppMissoesRoute,
   AppPerfilRoute: AppPerfilRoute,
   AppPontosRoute: AppPontosRoute,

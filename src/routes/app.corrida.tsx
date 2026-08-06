@@ -200,7 +200,7 @@ function Corrida() {
                   {fmtDistancia(c.distanciaM)}
                 </p>
                 <p className="truncate text-[11px] text-muted-foreground">
-                  {fmtDataHora(c.finalizadaEm)}
+                  {fmtDataHora(c.finalizadaEm ?? c.iniciadaEm)}
                 </p>
               </div>
               <span className="shrink-0 text-xs text-muted-foreground tabular-nums">
