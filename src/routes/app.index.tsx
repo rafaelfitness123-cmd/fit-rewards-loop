@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Flame, Megaphone, Star, Timer, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { getAvisos, getClientes, getMissoes } from "@/lib/db";
+import { getAvisos, getClientes, getMissoes, getSessao } from "@/lib/db";
 import { useClienteAtual, useStore } from "@/lib/session";
 import {
   duracaoMinutos,
@@ -37,11 +37,8 @@ export const Route = createFileRoute("/app/")({
 function Inicio() {
   const cliente = useClienteAtual();
   const [dados] = useStore(() => {
-    const id =
-      typeof window !== "undefined"
-        ? (JSON.parse(window.localStorage.getItem("academia_sessao") || "null")
-            ?.clienteId as string | undefined)
-        : undefined;
+    const s = getSessao();
+    const id = s?.tipo === "cliente" ? s.clienteId : undefined;
     if (!id) return null;
     const treinos = treinosDe(id);
     return {

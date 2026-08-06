@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { CalendarDays, Flame, LogOut, Star, Timer, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { getClientes, getMissoes, getResgates } from "@/lib/db";
+import { getClientes, getMissoes, getResgates, getSessao } from "@/lib/db";
 import { logout, useClienteAtual, useStore } from "@/lib/session";
 import {
   duracaoMinutos,
@@ -40,11 +40,8 @@ function Perfil() {
   const navigate = useNavigate();
   const cliente = useClienteAtual();
   const [dados] = useStore(() => {
-    const s = JSON.parse(
-      (typeof window !== "undefined" && window.localStorage.getItem("academia_sessao")) ||
-        "null",
-    );
-    const id = s?.clienteId as string | undefined;
+    const s = getSessao();
+    const id = s?.tipo === "cliente" ? s.clienteId : undefined;
     if (!id) return null;
     return {
       pontos: saldoDe(id),

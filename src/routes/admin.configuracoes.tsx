@@ -8,10 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  getAdmin,
   getAvisos,
   getConfig,
-  setAdmin,
   setAvisos,
   setConfig,
   uid,
@@ -19,6 +17,7 @@ import {
   type ConfigGamificacao,
 } from "@/lib/db";
 import { useStore } from "@/lib/session";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/admin/configuracoes")({
   head: () => ({
@@ -44,7 +43,7 @@ function Configuracoes() {
   const [form, setForm] = useState<ConfigGamificacao>(salvo);
   const [avisos, refreshAvisos] = useStore(() => getAvisos());
   const [novoAviso, setNovoAviso] = useState({ titulo: "", texto: "", destaque: false });
-  const [credenciais, setCredenciais] = useState(() => getAdmin());
+  const [novaSenha, setNovaSenha] = useState("");
 
   const salvar = () => {
     setConfig({
@@ -250,37 +249,31 @@ function Configuracoes() {
       </section>
 
       <section className="surface space-y-4 p-5">
-        <h2 className="text-sm font-bold">Credenciais do administrador</h2>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="space-y-2">
-            <Label>Usuário</Label>
-            <Input
-              value={credenciais.usuario}
-              onChange={(e) =>
-                setCredenciais({ ...credenciais, usuario: e.target.value })
-              }
-            />
-          </div>
-          <div className="space-y-2">
-            <Label>Senha</Label>
-            <Input
-              value={credenciais.senha}
-              onChange={(e) => setCredenciais({ ...credenciais, senha: e.target.value })}
-            />
-          </div>
+        <h2 className="text-sm font-bold">Senha do administrador</h2>
+        <div className="space-y-2">
+          <Label>Nova senha</Label>
+          <Input
+            type="password"
+            value={novaSenha}
+            onChange={(e) => setNovaSenha(e.target.value)}
+          />
         </div>
         <Button
           variant="secondary"
-          onClick={() => {
-            if (!credenciais.usuario || !credenciais.senha) {
-              toast.error("Preencha usuário e senha.");
+          onClick={async () => {
+            if (novaSenha.length < 6) {
+              toast.error("A senha precisa ter ao menos 6 caracteres.");
               return;
             }
-            setAdmin(credenciais);
-            toast.success("Credenciais atualizadas.");
+            const { error } = await supabase.auth.updateUser({ password: novaSenha });
+            if (error) toast.error("Não foi possível alterar a senha.");
+            else {
+              setNovaSenha("");
+              toast.success("Senha atualizada.");
+            }
           }}
         >
-          Salvar credenciais
+          Salvar nova senha
         </Button>
       </section>
     </div>

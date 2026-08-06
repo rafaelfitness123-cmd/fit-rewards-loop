@@ -1,18 +1,14 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Dumbbell, Flame, ShieldCheck, Trophy } from "lucide-react";
+import { Dumbbell, Flame, Loader2, ShieldCheck, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  finishHydration,
-  getAdmin,
-  getClientes,
-  getSessao,
-  seed,
-  setSessao,
-} from "@/lib/db";
+import { supabase } from "@/integrations/supabase/client";
+import { EMAIL_ADMIN, emailDoCpf } from "@/lib/cpf";
+import { prepararAdmin } from "@/lib/contas.functions";
+import { iniciarDados, recarregar, useSessao } from "@/lib/session";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/")({
@@ -30,6 +26,8 @@ export const Route = createFileRoute("/")({
         content:
           "Check-in por QR Code, gamificação com pontos, missões, ranking e resgate de recompensas.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: Login,
@@ -37,42 +35,45 @@ export const Route = createFileRoute("/")({
 
 function Login() {
   const navigate = useNavigate();
+  const sessao = useSessao();
   const [cpf, setCpf] = useState("");
   const [senhaCliente, setSenhaCliente] = useState("");
-  const [usuario, setUsuario] = useState("");
+  const [usuario, setUsuario] = useState("admin");
   const [senhaAdmin, setSenhaAdmin] = useState("");
+  const [carregando, setCarregando] = useState(false);
 
   useEffect(() => {
-    finishHydration();
-    seed();
-    const s = getSessao();
-    if (s?.tipo === "cliente") navigate({ to: "/app" });
-    if (s?.tipo === "admin") navigate({ to: "/admin" });
-  }, [navigate]);
+    iniciarDados();
+    void prepararAdmin().catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (sessao?.tipo === "cliente") navigate({ to: "/app" });
+    if (sessao?.tipo === "admin") navigate({ to: "/admin" });
+  }, [sessao, navigate]);
+
+  const entrar = async (email: string, senha: string, destino: "/app" | "/admin") => {
+    setCarregando(true);
+    const { error } = await supabase.auth.signInWithPassword({ email, password: senha });
+    if (error) {
+      setCarregando(false);
+      toast.error("Dados de acesso inválidos.");
+      return;
+    }
+    await recarregar();
+    setCarregando(false);
+    navigate({ to: destino });
+  };
 
   const entrarCliente = (e: React.FormEvent) => {
     e.preventDefault();
-    const limpo = cpf.replace(/\D/g, "");
-    const cliente = getClientes().find(
-      (c) => c.cpf.replace(/\D/g, "") === limpo && c.senha === senhaCliente,
-    );
-    if (!cliente) {
-      toast.error("CPF ou senha inválidos.");
-      return;
-    }
-    setSessao({ tipo: "cliente", clienteId: cliente.id });
-    navigate({ to: "/app" });
+    void entrar(emailDoCpf(cpf), senhaCliente, "/app");
   };
 
   const entrarAdmin = (e: React.FormEvent) => {
     e.preventDefault();
-    const admin = getAdmin();
-    if (usuario !== admin.usuario || senhaAdmin !== admin.senha) {
-      toast.error("Usuário ou senha inválidos.");
-      return;
-    }
-    setSessao({ tipo: "admin", usuario: admin.usuario });
-    navigate({ to: "/admin" });
+    const email = usuario.includes("@") ? usuario.trim() : EMAIL_ADMIN;
+    void entrar(email, senhaAdmin, "/admin");
   };
 
   return (
@@ -85,7 +86,7 @@ function Login() {
         <p className="mt-2 text-sm text-muted-foreground">
           Treine, pontue e suba no ranking da sua academia.
         </p>
-        <div className="mt-4 flex justify-center gap-4 text-xs text-muted-foreground">
+        <div className="mt-4 flex flex-wrap justify-center gap-4 text-xs text-muted-foreground">
           <span className="flex items-center gap-1">
             <Flame className="size-3.5 text-flame" /> Sequências
           </span>
@@ -98,7 +99,7 @@ function Login() {
         </div>
       </header>
 
-      <div className="w-full max-w-sm surface p-5">
+      <div className="surface w-full max-w-sm p-5">
         <Tabs defaultValue="cliente">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="cliente">Aluno</TabsTrigger>
@@ -126,11 +127,12 @@ function Login() {
                   onChange={(e) => setSenhaCliente(e.target.value)}
                 />
               </div>
-              <Button type="submit" className="w-full font-bold">
+              <Button type="submit" className="w-full font-bold" disabled={carregando}>
+                {carregando && <Loader2 className="mr-2 size-4 animate-spin" />}
                 Entrar
               </Button>
               <p className="text-center text-xs text-muted-foreground">
-                Teste: CPF 12345678900 · senha 123
+                O acesso do aluno é criado pelo administrador.
               </p>
             </form>
           </TabsContent>
@@ -154,11 +156,12 @@ function Login() {
                   onChange={(e) => setSenhaAdmin(e.target.value)}
                 />
               </div>
-              <Button type="submit" className="w-full font-bold">
+              <Button type="submit" className="w-full font-bold" disabled={carregando}>
+                {carregando && <Loader2 className="mr-2 size-4 animate-spin" />}
                 Acessar painel
               </Button>
               <p className="text-center text-xs text-muted-foreground">
-                Teste: admin · 123
+                Acesso inicial: admin · 123456
               </p>
             </form>
           </TabsContent>

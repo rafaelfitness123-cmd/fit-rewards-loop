@@ -1,8 +1,8 @@
 import { Link, Outlet, createFileRoute, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useEffect } from "react";
-import { Home, ListChecks, QrCode, Star, Trophy, User } from "lucide-react";
-import { finishHydration, getSessao, seed } from "@/lib/db";
-import { useClienteAtual } from "@/lib/session";
+import { Footprints, Home, ListChecks, QrCode, Star, Trophy, User } from "lucide-react";
+import { getSessao } from "@/lib/db";
+import { iniciarDados, useCachePronto, useClienteAtual } from "@/lib/session";
 
 export const Route = createFileRoute("/app")({
   component: AppLayout,
@@ -19,48 +19,65 @@ const nav = [
 function AppLayout() {
   const navigate = useNavigate();
   const cliente = useClienteAtual();
+  const pronto = useCachePronto();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
   useEffect(() => {
-    finishHydration();
-    seed();
+    iniciarDados();
+  }, []);
+
+  useEffect(() => {
+    if (!pronto) return;
     const s = getSessao();
     if (!s) navigate({ to: "/" });
     else if (s.tipo === "admin") navigate({ to: "/admin" });
-  }, [navigate]);
+  }, [pronto, navigate]);
 
   if (!cliente) return null;
 
   return (
-    <div className="min-h-screen bg-background pb-24">
+    <div className="min-h-screen bg-background pb-[calc(5.5rem+env(safe-area-inset-bottom))]">
       <div className="mx-auto w-full max-w-lg px-4 pt-5">
         <Outlet />
       </div>
 
-      <Link
-        to="/app/scan"
-        aria-label="Escanear QR Code"
-        className="fixed bottom-20 left-1/2 z-20 flex size-16 -translate-x-1/2 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-[var(--shadow-glow)] transition-transform active:scale-95"
-      >
-        <QrCode className="size-7" />
-      </Link>
+      <div className="pointer-events-none fixed inset-x-0 bottom-[calc(4.75rem+env(safe-area-inset-bottom))] z-20 mx-auto flex w-full max-w-lg justify-end px-4">
+        <div className="pointer-events-auto flex flex-col gap-3">
+          <Link
+            to="/app/corrida"
+            aria-label="Iniciar corrida com GPS"
+            className="flex size-12 items-center justify-center rounded-full bg-secondary text-secondary-foreground shadow-lg transition-transform active:scale-95"
+          >
+            <Footprints className="size-5" />
+          </Link>
+          <Link
+            to="/app/scan"
+            aria-label="Escanear QR Code"
+            className="flex size-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-[var(--shadow-glow)] transition-transform active:scale-95"
+          >
+            <QrCode className="size-6" />
+          </Link>
+        </div>
+      </div>
 
-      <nav className="fixed inset-x-0 bottom-0 z-10 border-t border-border bg-card/95 backdrop-blur">
-        <ul className="mx-auto flex w-full max-w-lg items-stretch">
-          {nav.map((item, i) => {
+      <nav className="fixed inset-x-0 bottom-0 z-10 border-t border-border bg-card/95 pb-[env(safe-area-inset-bottom)] backdrop-blur">
+        <ul className="mx-auto grid w-full max-w-lg grid-cols-5">
+          {nav.map((item) => {
             const active = item.exact
               ? pathname === item.to
               : pathname.startsWith(item.to);
             return (
-              <li key={item.to} className={`flex-1 ${i === 2 ? "mr-8" : ""} ${i === 3 ? "ml-8" : ""}`}>
+              <li key={item.to} className="min-w-0">
                 <Link
                   to={item.to}
-                  className={`flex flex-col items-center gap-1 py-3 text-[11px] font-medium transition-colors ${
+                  className={`flex min-w-0 flex-col items-center gap-1 px-1 py-2.5 transition-colors ${
                     active ? "text-primary" : "text-muted-foreground"
                   }`}
                 >
-                  <item.icon className="size-5" />
-                  {item.label}
+                  <item.icon className="size-5 shrink-0" />
+                  <span className="w-full truncate text-center text-[10px] font-medium leading-tight">
+                    {item.label}
+                  </span>
                 </Link>
               </li>
             );

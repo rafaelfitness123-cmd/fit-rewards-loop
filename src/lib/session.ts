@@ -1,34 +1,54 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import {
-  finishHydration,
+  cache,
+  carregarTudo,
   getClientes,
   getSessao,
-  seed,
-  setSessao,
+  inscrever,
+  notificar,
   type Cliente,
 } from "./db";
 
-/** Re-executa `selector` sempre que o localStorage do app muda. */
+let iniciado = false;
+
+/** Garante que o cache foi carregado do banco uma única vez por sessão. */
+export function iniciarDados() {
+  if (iniciado) return;
+  iniciado = true;
+  void carregarTudo();
+  supabase.auth.onAuthStateChange((evento) => {
+    if (evento === "SIGNED_IN" || evento === "SIGNED_OUT" || evento === "USER_UPDATED") {
+      void carregarTudo();
+    }
+  });
+}
+
+export async function recarregar() {
+  await carregarTudo();
+}
+
+/** Re-executa `selector` sempre que o cache do app muda. */
 export function useStore<T>(selector: () => T): [T, () => void] {
   const [value, setValue] = useState<T>(() => selector());
   const refresh = useCallback(() => setValue(selector()), [selector]);
 
   useEffect(() => {
-    finishHydration();
-    seed();
+    iniciarDados();
     setValue(selector());
-    const handler = () => setValue(selector());
-    window.addEventListener("academia:update", handler);
-    window.addEventListener("storage", handler);
-    return () => {
-      window.removeEventListener("academia:update", handler);
-      window.removeEventListener("storage", handler);
-    };
+    return inscrever(() => setValue(selector()));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-
   return [value, refresh];
+}
+
+export function useCachePronto() {
+  return useSyncExternalStore(
+    inscrever,
+    () => cache.pronto,
+    () => false,
+  );
 }
 
 export function useSessao() {
@@ -45,6 +65,9 @@ export function useClienteAtual(): Cliente | null {
   return cliente;
 }
 
-export function logout() {
-  setSessao(null);
+export async function logout() {
+  await supabase.auth.signOut();
+  cache.sessao = null;
+  cache.pronto = true;
+  notificar();
 }

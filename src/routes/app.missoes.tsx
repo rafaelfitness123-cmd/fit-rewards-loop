@@ -4,7 +4,9 @@ import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getMissoes, type Missao, type MissaoTipo } from "@/lib/db";
 import { useClienteAtual, useStore } from "@/lib/session";
-import { missaoVigente, progressoDaMissao } from "@/lib/gamificacao";
+import { aceitarMissao, missaoVigente, progressoDaMissao } from "@/lib/gamificacao";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/app/missoes")({
   head: () => ({
@@ -34,18 +36,25 @@ const tipos: { valor: MissaoTipo | "todas"; label: string }[] = [
 
 function Missoes() {
   const cliente = useClienteAtual();
-  const [lista] = useStore(() => {
-    const s = JSON.parse(
-      (typeof window !== "undefined" && window.localStorage.getItem("academia_sessao")) ||
-        "null",
-    );
-    const id = s?.clienteId as string | undefined;
-    if (!id) return [] as { m: Missao; progresso: number; concluida: boolean }[];
+  const id = cliente?.id;
+  const [lista, atualizar] = useStore(() => {
+    if (!id)
+      return [] as {
+        m: Missao;
+        progresso: number;
+        concluida: boolean;
+        aceita: boolean;
+      }[];
     return getMissoes()
       .filter((m) => missaoVigente(m))
       .map((m) => {
         const p = progressoDaMissao(id, m);
-        return { m, progresso: p.progresso, concluida: p.concedida || p.concluida };
+        return {
+          m,
+          progresso: p.progresso,
+          concluida: p.concedida || p.concluida,
+          aceita: p.aceita,
+        };
       });
   });
 
@@ -78,7 +87,7 @@ function Missoes() {
                   Nenhuma missão ativa nesta categoria.
                 </p>
               ) : (
-                filtradas.map(({ m, progresso, concluida }) => (
+                filtradas.map(({ m, progresso, concluida, aceita }) => (
                   <article
                     key={m.id}
                     className={`surface p-4 ${concluida ? "border-primary/50" : ""}`}
@@ -108,8 +117,32 @@ function Missoes() {
                     <p className="mt-1 text-[11px] text-muted-foreground">
                       {concluida
                         ? "Missão concluída 🎉"
-                        : `${progresso}/${m.quantidade} concluídos`}
+                        : m.objetivo === "distancia"
+                          ? `${(progresso / 1000).toFixed(2)} km de ${(m.quantidade / 1000).toFixed(2)} km`
+                          : `${progresso}/${m.quantidade} concluídos`}
                     </p>
+                    {m.objetivo === "distancia" && !concluida && (
+                      <div className="mt-3">
+                        {aceita ? (
+                          <p className="text-[11px] font-semibold text-primary">
+                            Desafio aceito — registre sua corrida no botão de GPS.
+                          </p>
+                        ) : (
+                          <Button
+                            size="sm"
+                            className="w-full font-bold"
+                            onClick={() => {
+                              if (!id) return;
+                              aceitarMissao(id, m);
+                              atualizar();
+                              toast.success("Missão aceita! Bora correr.");
+                            }}
+                          >
+                            Aceitar missão
+                          </Button>
+                        )}
+                      </div>
+                    )}
                   </article>
                 ))
               )}

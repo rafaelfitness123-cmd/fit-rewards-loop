@@ -1,21 +1,5 @@
-// Camada de dados — 100% localStorage (protótipo)
-
-export const KEYS = {
-  admin: "academia_admin",
-  clientes: "academia_clientes",
-  treinos: "academia_treinos",
-  qr: "academia_qr",
-  pontos: "academia_pontos",
-  missoes: "academia_missoes",
-  progressoMissoes: "academia_progresso_missoes",
-  recompensas: "academia_recompensas",
-  resgates: "academia_resgates",
-  configGamificacao: "academia_config_gamificacao",
-  configDias: "academia_config_dias",
-  historicoPontos: "academia_historico_pontos",
-  avisos: "academia_avisos",
-  sessao: "academia_sessao",
-} as const;
+// Camada de dados — cache em memória sincronizado com o banco (Lovable Cloud).
+import { supabase } from "@/integrations/supabase/client";
 
 export type Admin = { usuario: string; senha: string };
 
@@ -31,7 +15,7 @@ export type Cliente = {
 export type Treino = {
   id: string;
   clienteId: string;
-  entrada: string; // ISO
+  entrada: string;
   saida: string | null;
   pontosConcedidos: boolean;
   pontosEntrada: number;
@@ -48,7 +32,7 @@ export type QRCodeItem = {
 };
 
 export type MissaoTipo = "diaria" | "semanal" | "mensal" | "especial";
-export type MissaoObjetivo = "treinos" | "dia_semana";
+export type MissaoObjetivo = "treinos" | "dia_semana" | "distancia";
 
 export type Missao = {
   id: string;
@@ -56,10 +40,10 @@ export type Missao = {
   descricao: string;
   tipo: MissaoTipo;
   objetivo: MissaoObjetivo;
-  diaSemana: number | null; // 0=Dom .. 6=Sáb (quando objetivo = dia_semana)
+  diaSemana: number | null;
   quantidade: number;
   pontos: number;
-  inicio: string | null; // YYYY-MM-DD
+  inicio: string | null;
   fim: string | null;
   ativa: boolean;
 };
@@ -70,9 +54,20 @@ export type ProgressoMissao = {
   missaoId: string;
   periodo: string;
   progresso: number;
+  aceita: boolean;
   concluida: boolean;
   concedida: boolean;
   atualizadoEm: string;
+};
+
+export type Corrida = {
+  id: string;
+  clienteId: string;
+  missaoId: string | null;
+  distanciaM: number;
+  duracaoS: number;
+  iniciadaEm: string;
+  finalizadaEm: string | null;
 };
 
 export type Recompensa = {
@@ -115,7 +110,7 @@ export type ConfigGamificacao = {
   minutosEntreTreinos: number;
 };
 
-export type ConfigDias = Record<string, number>; // "0".."6"
+export type ConfigDias = Record<string, number>;
 
 export type Aviso = {
   id: string;
@@ -129,39 +124,6 @@ export type Sessao =
   | { tipo: "admin"; usuario: string }
   | { tipo: "cliente"; clienteId: string }
   | null;
-
-const isBrowser = () => typeof window !== "undefined";
-
-/**
- * Durante a primeira renderização no cliente devolvemos os mesmos valores que o
- * servidor usou (os fallbacks), evitando divergência de hidratação. Depois que
- * o app monta, `finishHydration()` libera a leitura real do localStorage.
- */
-let hydrating = true;
-export const finishHydration = () => {
-  hydrating = false;
-};
-
-export function read<T>(key: string, fallback: T): T {
-  if (!isBrowser() || hydrating) return fallback;
-  try {
-    const raw = window.localStorage.getItem(key);
-    if (!raw) return fallback;
-    return JSON.parse(raw) as T;
-  } catch {
-    return fallback;
-  }
-}
-
-
-export function write<T>(key: string, value: T) {
-  if (!isBrowser()) return;
-  window.localStorage.setItem(key, JSON.stringify(value));
-  window.dispatchEvent(new CustomEvent("academia:update", { detail: key }));
-}
-
-export const uid = () =>
-  Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
 
 export const DIAS = [
   "Domingo",
@@ -184,7 +146,7 @@ export const DEFAULT_CONFIG_DIAS: ConfigDias = {
 };
 
 export const DEFAULT_CONFIG: ConfigGamificacao = {
-  pontosCheckin: 0,
+  pontosCheckin: 10,
   usarCheckout: true,
   pontosCheckout: 5,
   bonusSequencia: [
@@ -195,86 +157,470 @@ export const DEFAULT_CONFIG: ConfigGamificacao = {
   minutosEntreTreinos: 60,
 };
 
-/** Cria os dados iniciais mínimos (1 admin + 1 cliente de teste). */
-export function seed() {
-  if (!isBrowser()) return;
-  if (!window.localStorage.getItem(KEYS.admin)) {
-    write<Admin>(KEYS.admin, { usuario: "admin", senha: "123" });
-  }
-  if (!window.localStorage.getItem(KEYS.clientes)) {
-    write<Cliente[]>(KEYS.clientes, [
-      {
-        id: "cliente-teste",
-        nome: "Cliente Teste",
-        cpf: "12345678900",
-        senha: "123",
-        criadoEm: new Date().toISOString(),
-      },
-    ]);
-  }
-  const ensure = (key: string, value: unknown) => {
-    if (!window.localStorage.getItem(key)) write(key, value);
+export const uid = () =>
+  typeof crypto !== "undefined" && "randomUUID" in crypto
+    ? crypto.randomUUID()
+    : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+
+// ---------------- cache ----------------
+type Cache = {
+  pronto: boolean;
+  carregando: boolean;
+  sessao: Sessao;
+  clientes: Cliente[];
+  treinos: Treino[];
+  qrs: QRCodeItem[];
+  missoes: Missao[];
+  progressos: ProgressoMissao[];
+  corridas: Corrida[];
+  recompensas: Recompensa[];
+  resgates: Resgate[];
+  historico: HistoricoPonto[];
+  avisos: Aviso[];
+  pontos: Record<string, number>;
+  config: ConfigGamificacao;
+  configDias: ConfigDias;
+};
+
+export const cache: Cache = {
+  pronto: false,
+  carregando: false,
+  sessao: null,
+  clientes: [],
+  treinos: [],
+  qrs: [],
+  missoes: [],
+  progressos: [],
+  corridas: [],
+  recompensas: [],
+  resgates: [],
+  historico: [],
+  avisos: [],
+  pontos: {},
+  config: DEFAULT_CONFIG,
+  configDias: DEFAULT_CONFIG_DIAS,
+};
+
+const ouvintes = new Set<() => void>();
+export function inscrever(fn: () => void) {
+  ouvintes.add(fn);
+  return () => {
+    ouvintes.delete(fn);
   };
-  ensure(KEYS.treinos, []);
-  ensure(KEYS.qr, []);
-  ensure(KEYS.pontos, {});
-  ensure(KEYS.missoes, []);
-  ensure(KEYS.progressoMissoes, []);
-  ensure(KEYS.recompensas, []);
-  ensure(KEYS.resgates, []);
-  ensure(KEYS.historicoPontos, []);
-  ensure(KEYS.avisos, []);
-  ensure(KEYS.configDias, DEFAULT_CONFIG_DIAS);
-  ensure(KEYS.configGamificacao, DEFAULT_CONFIG);
+}
+export function notificar() {
+  ouvintes.forEach((fn) => fn());
 }
 
-// ---- getters/setters tipados ----
-export const getAdmin = () => read<Admin>(KEYS.admin, { usuario: "admin", senha: "123" });
-export const setAdmin = (a: Admin) => write(KEYS.admin, a);
+const erro = (ctx: string) => (r: { error: unknown }) => {
+  if (r.error) console.error(`[db:${ctx}]`, r.error);
+  return r;
+};
 
-export const getClientes = () => read<Cliente[]>(KEYS.clientes, []);
-export const setClientes = (c: Cliente[]) => write(KEYS.clientes, c);
+// ---------------- mapeadores ----------------
+type Row = Record<string, unknown>;
+const str = (v: unknown) => (v == null ? "" : String(v));
+const num = (v: unknown) => Number(v ?? 0);
 
-export const getTreinos = () => read<Treino[]>(KEYS.treinos, []);
-export const setTreinos = (t: Treino[]) => write(KEYS.treinos, t);
-
-export const getQRs = () => read<QRCodeItem[]>(KEYS.qr, []);
-export const setQRs = (q: QRCodeItem[]) => write(KEYS.qr, q);
-
-export const getPontos = () => read<Record<string, number>>(KEYS.pontos, {});
-export const setPontos = (p: Record<string, number>) => write(KEYS.pontos, p);
-
-export const getMissoes = () => read<Missao[]>(KEYS.missoes, []);
-export const setMissoes = (m: Missao[]) => write(KEYS.missoes, m);
-
-export const getProgressos = () =>
-  read<ProgressoMissao[]>(KEYS.progressoMissoes, []);
-export const setProgressos = (p: ProgressoMissao[]) =>
-  write(KEYS.progressoMissoes, p);
-
-export const getRecompensas = () => read<Recompensa[]>(KEYS.recompensas, []);
-export const setRecompensas = (r: Recompensa[]) => write(KEYS.recompensas, r);
-
-export const getResgates = () => read<Resgate[]>(KEYS.resgates, []);
-export const setResgates = (r: Resgate[]) => write(KEYS.resgates, r);
-
-export const getHistorico = () => read<HistoricoPonto[]>(KEYS.historicoPontos, []);
-export const setHistorico = (h: HistoricoPonto[]) => write(KEYS.historicoPontos, h);
-
-export const getAvisos = () => read<Aviso[]>(KEYS.avisos, []);
-export const setAvisos = (a: Aviso[]) => write(KEYS.avisos, a);
-
-export const getConfigDias = () => ({
-  ...DEFAULT_CONFIG_DIAS,
-  ...read<ConfigDias>(KEYS.configDias, DEFAULT_CONFIG_DIAS),
+const mapCliente = (r: Row): Cliente => ({
+  id: str(r["id"]),
+  nome: str(r["nome"]),
+  cpf: str(r["cpf"]),
+  senha: "",
+  avatar: (r["avatar"] as string | null) ?? undefined,
+  criadoEm: str(r["criado_em"]),
 });
-export const setConfigDias = (c: ConfigDias) => write(KEYS.configDias, c);
 
-export const getConfig = (): ConfigGamificacao => ({
-  ...DEFAULT_CONFIG,
-  ...read<Partial<ConfigGamificacao>>(KEYS.configGamificacao, {}),
+const mapTreino = (r: Row): Treino => ({
+  id: str(r["id"]),
+  clienteId: str(r["cliente_id"]),
+  entrada: str(r["entrada"]),
+  saida: (r["saida"] as string | null) ?? null,
+  pontosConcedidos: Boolean(r["pontos_concedidos"]),
+  pontosEntrada: num(r["pontos_entrada"]),
+  pontosSaida: num(r["pontos_saida"]),
 });
-export const setConfig = (c: ConfigGamificacao) => write(KEYS.configGamificacao, c);
 
-export const getSessao = () => read<Sessao>(KEYS.sessao, null);
-export const setSessao = (s: Sessao) => write(KEYS.sessao, s);
+const mapQr = (r: Row): QRCodeItem => ({
+  id: str(r["id"]),
+  codigo: str(r["codigo"]),
+  nome: str(r["nome"]),
+  criadoEm: str(r["criado_em"]),
+  expiraEm: (r["expira_em"] as string | null) ?? null,
+  ativo: Boolean(r["ativo"]),
+});
+
+const mapMissao = (r: Row): Missao => ({
+  id: str(r["id"]),
+  nome: str(r["nome"]),
+  descricao: str(r["descricao"]),
+  tipo: str(r["tipo"]) as MissaoTipo,
+  objetivo: str(r["objetivo"]) as MissaoObjetivo,
+  diaSemana: r["dia_semana"] == null ? null : num(r["dia_semana"]),
+  quantidade: num(r["quantidade"]),
+  pontos: num(r["pontos"]),
+  inicio: (r["inicio"] as string | null) ?? null,
+  fim: (r["fim"] as string | null) ?? null,
+  ativa: Boolean(r["ativa"]),
+});
+
+const mapProgresso = (r: Row): ProgressoMissao => ({
+  id: `${str(r["cliente_id"])}|${str(r["missao_id"])}|${str(r["periodo"])}`,
+  clienteId: str(r["cliente_id"]),
+  missaoId: str(r["missao_id"]),
+  periodo: str(r["periodo"]),
+  progresso: num(r["progresso"]),
+  aceita: Boolean(r["aceita"]),
+  concluida: Boolean(r["concluida"]),
+  concedida: Boolean(r["concedida"]),
+  atualizadoEm: str(r["atualizado_em"]),
+});
+
+const mapCorrida = (r: Row): Corrida => ({
+  id: str(r["id"]),
+  clienteId: str(r["cliente_id"]),
+  missaoId: (r["missao_id"] as string | null) ?? null,
+  distanciaM: num(r["distancia_m"]),
+  duracaoS: num(r["duracao_s"]),
+  iniciadaEm: str(r["iniciada_em"]),
+  finalizadaEm: (r["finalizada_em"] as string | null) ?? null,
+});
+
+const mapRecompensa = (r: Row): Recompensa => ({
+  id: str(r["id"]),
+  nome: str(r["nome"]),
+  descricao: str(r["descricao"]),
+  pontos: num(r["pontos"]),
+  quantidade: num(r["quantidade"]),
+  ativa: Boolean(r["ativa"]),
+});
+
+const mapResgate = (r: Row): Resgate => ({
+  id: str(r["id"]),
+  clienteId: str(r["cliente_id"]),
+  clienteNome: str(r["cliente_nome"]),
+  recompensaId: str(r["recompensa_id"]),
+  recompensaNome: str(r["recompensa_nome"]),
+  pontos: num(r["pontos"]),
+  data: str(r["data"]),
+  status: str(r["status"]) as ResgateStatus,
+});
+
+const mapHistorico = (r: Row): HistoricoPonto => ({
+  id: str(r["id"]),
+  clienteId: str(r["cliente_id"]),
+  delta: num(r["delta"]),
+  motivo: str(r["motivo"]),
+  data: str(r["data"]),
+});
+
+const mapAviso = (r: Row): Aviso => ({
+  id: str(r["id"]),
+  titulo: str(r["titulo"]),
+  texto: str(r["texto"]),
+  data: str(r["data"]),
+  destaque: Boolean(r["destaque"]),
+});
+
+// ---------------- carga ----------------
+const db = supabase as unknown as {
+  from: (t: string) => any;
+  auth: (typeof supabase)["auth"];
+};
+
+export async function carregarTudo() {
+  const { data: auth } = await supabase.auth.getUser();
+  const user = auth?.user ?? null;
+  if (!user) {
+    cache.sessao = null;
+    cache.pronto = true;
+    notificar();
+    return;
+  }
+
+  const [
+    profiles,
+    papeis,
+    treinos,
+    qrs,
+    missoes,
+    progressos,
+    corridas,
+    recompensas,
+    resgates,
+    historico,
+    avisos,
+    config,
+  ] = await Promise.all([
+    db.from("profiles").select("*").order("nome"),
+    db.from("user_roles").select("*").eq("user_id", user.id),
+    db.from("treinos").select("*").order("entrada", { ascending: false }),
+    db.from("qrcodes").select("*").order("criado_em", { ascending: false }),
+    db.from("missoes").select("*").order("criado_em", { ascending: false }),
+    db.from("progresso_missoes").select("*"),
+    db.from("corridas").select("*").order("iniciada_em", { ascending: false }),
+    db.from("recompensas").select("*").order("criado_em", { ascending: false }),
+    db.from("resgates").select("*").order("data", { ascending: false }),
+    db.from("historico_pontos").select("*").order("data", { ascending: false }),
+    db.from("avisos").select("*").order("data", { ascending: false }),
+    db.from("config").select("*"),
+  ]);
+
+  const perfis = (profiles.data ?? []) as Row[];
+  cache.clientes = perfis.map(mapCliente).filter((c) => !!c.cpf && c.cpf !== "admin");
+  cache.pontos = Object.fromEntries(perfis.map((r) => [str(r["id"]), num(r["pontos"])]));
+  cache.treinos = ((treinos.data ?? []) as Row[]).map(mapTreino);
+  cache.qrs = ((qrs.data ?? []) as Row[]).map(mapQr);
+  cache.missoes = ((missoes.data ?? []) as Row[]).map(mapMissao);
+  cache.progressos = ((progressos.data ?? []) as Row[]).map(mapProgresso);
+  cache.corridas = ((corridas.data ?? []) as Row[]).map(mapCorrida);
+  cache.recompensas = ((recompensas.data ?? []) as Row[]).map(mapRecompensa);
+  cache.resgates = ((resgates.data ?? []) as Row[]).map(mapResgate);
+  cache.historico = ((historico.data ?? []) as Row[]).map(mapHistorico);
+  cache.avisos = ((avisos.data ?? []) as Row[]).map(mapAviso);
+
+  for (const row of (config.data ?? []) as Row[]) {
+    if (str(row["id"]) === "gamificacao")
+      cache.config = { ...DEFAULT_CONFIG, ...(row["dados"] as object) };
+    if (str(row["id"]) === "dias")
+      cache.configDias = { ...DEFAULT_CONFIG_DIAS, ...(row["dados"] as object) };
+  }
+
+  const ehAdmin = (papeis.data ?? []).some((p: Row) => str(p["role"]) === "admin");
+  const perfil = perfis.find((p) => str(p["id"]) === user.id);
+  cache.sessao = ehAdmin
+    ? { tipo: "admin", usuario: perfil ? str(perfil["nome"]) : "admin" }
+    : { tipo: "cliente", clienteId: user.id };
+
+  cache.pronto = true;
+  notificar();
+}
+
+// ---------------- sincronização genérica ----------------
+function diff<T extends { id: string }>(prev: T[], next: T[]) {
+  const antes = new Map(prev.map((i) => [i.id, i]));
+  const depois = new Map(next.map((i) => [i.id, i]));
+  const upserts = next.filter(
+    (i) => JSON.stringify(antes.get(i.id)) !== JSON.stringify(i),
+  );
+  const removidos = prev.filter((i) => !depois.has(i.id)).map((i) => i.id);
+  return { upserts, removidos };
+}
+
+function sincronizar<T extends { id: string }>(
+  tabela: string,
+  prev: T[],
+  next: T[],
+  toRow: (i: T) => Row,
+) {
+  const { upserts, removidos } = diff(prev, next);
+  if (upserts.length)
+    void db.from(tabela).upsert(upserts.map(toRow)).then(erro(tabela));
+  if (removidos.length)
+    void db.from(tabela).delete().in("id", removidos).then(erro(tabela));
+}
+
+// ---------------- getters / setters ----------------
+export const getClientes = () => cache.clientes;
+export function setClientes(lista: Cliente[]) {
+  const prev = cache.clientes;
+  cache.clientes = lista;
+  notificar();
+  sincronizar("profiles", prev, lista, (c) => ({
+    id: c.id,
+    nome: c.nome,
+    cpf: c.cpf,
+    avatar: c.avatar ?? null,
+    pontos: cache.pontos[c.id] ?? 0,
+  }));
+}
+
+export const getTreinos = () => cache.treinos;
+export function setTreinos(lista: Treino[]) {
+  const prev = cache.treinos;
+  cache.treinos = lista;
+  notificar();
+  sincronizar("treinos", prev, lista, (t) => ({
+    id: t.id,
+    cliente_id: t.clienteId,
+    entrada: t.entrada,
+    saida: t.saida,
+    pontos_concedidos: t.pontosConcedidos,
+    pontos_entrada: t.pontosEntrada,
+    pontos_saida: t.pontosSaida,
+  }));
+}
+
+export const getQRs = () => cache.qrs;
+export function setQRs(lista: QRCodeItem[]) {
+  const prev = cache.qrs;
+  cache.qrs = lista;
+  notificar();
+  sincronizar("qrcodes", prev, lista, (q) => ({
+    id: q.id,
+    codigo: q.codigo,
+    nome: q.nome,
+    criado_em: q.criadoEm,
+    expira_em: q.expiraEm,
+    ativo: q.ativo,
+  }));
+}
+
+export const getMissoes = () => cache.missoes;
+export function setMissoes(lista: Missao[]) {
+  const prev = cache.missoes;
+  cache.missoes = lista;
+  notificar();
+  sincronizar("missoes", prev, lista, (m) => ({
+    id: m.id,
+    nome: m.nome,
+    descricao: m.descricao,
+    tipo: m.tipo,
+    objetivo: m.objetivo,
+    dia_semana: m.diaSemana,
+    quantidade: m.quantidade,
+    pontos: m.pontos,
+    inicio: m.inicio,
+    fim: m.fim,
+    ativa: m.ativa,
+  }));
+}
+
+export const getProgressos = () => cache.progressos;
+export function setProgressos(lista: ProgressoMissao[]) {
+  const prev = new Map(cache.progressos.map((p) => [p.id, JSON.stringify(p)]));
+  cache.progressos = lista;
+  notificar();
+  const mudados = lista.filter((p) => prev.get(p.id) !== JSON.stringify(p));
+  if (!mudados.length) return;
+  void db
+    .from("progresso_missoes")
+    .upsert(
+      mudados.map((p) => ({
+        cliente_id: p.clienteId,
+        missao_id: p.missaoId,
+        periodo: p.periodo,
+        progresso: p.progresso,
+        aceita: p.aceita,
+        concluida: p.concluida,
+        concedida: p.concedida,
+        atualizado_em: p.atualizadoEm,
+      })),
+      { onConflict: "cliente_id,missao_id,periodo" },
+    )
+    .then(erro("progresso_missoes"));
+}
+
+export const getCorridas = () => cache.corridas;
+export function setCorridas(lista: Corrida[]) {
+  const prev = cache.corridas;
+  cache.corridas = lista;
+  notificar();
+  sincronizar("corridas", prev, lista, (c) => ({
+    id: c.id,
+    cliente_id: c.clienteId,
+    missao_id: c.missaoId,
+    distancia_m: c.distanciaM,
+    duracao_s: c.duracaoS,
+    iniciada_em: c.iniciadaEm,
+    finalizada_em: c.finalizadaEm,
+  }));
+}
+
+export const getRecompensas = () => cache.recompensas;
+export function setRecompensas(lista: Recompensa[]) {
+  const prev = cache.recompensas;
+  cache.recompensas = lista;
+  notificar();
+  sincronizar("recompensas", prev, lista, (r) => ({
+    id: r.id,
+    nome: r.nome,
+    descricao: r.descricao,
+    pontos: r.pontos,
+    quantidade: r.quantidade,
+    ativa: r.ativa,
+  }));
+}
+
+export const getResgates = () => cache.resgates;
+export function setResgates(lista: Resgate[]) {
+  const prev = cache.resgates;
+  cache.resgates = lista;
+  notificar();
+  sincronizar("resgates", prev, lista, (r) => ({
+    id: r.id,
+    cliente_id: r.clienteId,
+    cliente_nome: r.clienteNome,
+    recompensa_id: r.recompensaId || null,
+    recompensa_nome: r.recompensaNome,
+    pontos: r.pontos,
+    data: r.data,
+    status: r.status,
+  }));
+}
+
+export const getHistorico = () => cache.historico;
+export function setHistorico(lista: HistoricoPonto[]) {
+  const prev = cache.historico;
+  cache.historico = lista;
+  notificar();
+  sincronizar("historico_pontos", prev, lista, (h) => ({
+    id: h.id,
+    cliente_id: h.clienteId,
+    delta: h.delta,
+    motivo: h.motivo,
+    data: h.data,
+  }));
+}
+
+export const getAvisos = () => cache.avisos;
+export function setAvisos(lista: Aviso[]) {
+  const prev = cache.avisos;
+  cache.avisos = lista;
+  notificar();
+  sincronizar("avisos", prev, lista, (a) => ({
+    id: a.id,
+    titulo: a.titulo,
+    texto: a.texto,
+    data: a.data,
+    destaque: a.destaque,
+  }));
+}
+
+export const getPontos = () => cache.pontos;
+export function setPontos(mapa: Record<string, number>) {
+  const prev = cache.pontos;
+  cache.pontos = { ...mapa };
+  notificar();
+  for (const [id, valor] of Object.entries(mapa)) {
+    if (prev[id] === valor) continue;
+    void db.from("profiles").update({ pontos: valor }).eq("id", id).then(erro("pontos"));
+  }
+}
+
+export const getConfig = (): ConfigGamificacao => cache.config;
+export function setConfig(c: ConfigGamificacao) {
+  cache.config = c;
+  notificar();
+  void db
+    .from("config")
+    .upsert({ id: "gamificacao", dados: c, atualizado_em: new Date().toISOString() })
+    .then(erro("config"));
+}
+
+export const getConfigDias = (): ConfigDias => cache.configDias;
+export function setConfigDias(c: ConfigDias) {
+  cache.configDias = c;
+  notificar();
+  void db
+    .from("config")
+    .upsert({ id: "dias", dados: c, atualizado_em: new Date().toISOString() })
+    .then(erro("configDias"));
+}
+
+export const getSessao = (): Sessao => cache.sessao;
+export const getAdmin = (): Admin => ({ usuario: "admin", senha: "" });
+
+// Compatibilidade com a versão anterior (localStorage)
+export const finishHydration = () => {};
+export const seed = () => {};
