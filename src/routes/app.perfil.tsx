@@ -2,9 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { CalendarDays, Flame, LogOut, Star, Timer, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { getClientes, getMissoes, getResgates
-  getSessao,
-} from "@/lib/db";
+import { getClientes, getMissoes, getResgates, getSessao } from "@/lib/db";
 import { logout, useClienteAtual, useStore } from "@/lib/session";
 import {
   duracaoMinutos,

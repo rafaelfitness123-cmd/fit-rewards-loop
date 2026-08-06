@@ -2,9 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Flame, Megaphone, Star, Timer, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { getAvisos, getClientes, getMissoes
-  getSessao,
-} from "@/lib/db";
+import { getAvisos, getClientes, getMissoes, getSessao } from "@/lib/db";
 import { useClienteAtual, useStore } from "@/lib/session";
 import {
   duracaoMinutos,
