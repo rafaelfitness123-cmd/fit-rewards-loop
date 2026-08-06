@@ -11,6 +11,7 @@ import {
   uid,
   type Recompensa,
   type Resgate,
+  getSessao,
 } from "@/lib/db";
 import { useClienteAtual, useStore } from "@/lib/session";
 import { addPontos, fmtDataHora, historicoDe, saldoDe } from "@/lib/gamificacao";
@@ -36,11 +37,8 @@ export const Route = createFileRoute("/app/pontos")({
 function Pontos() {
   const cliente = useClienteAtual();
   const [dados, refresh] = useStore(() => {
-    const s = JSON.parse(
-      (typeof window !== "undefined" && window.localStorage.getItem("academia_sessao")) ||
-        "null",
-    );
-    const id = s?.clienteId as string | undefined;
+    const s = getSessao();
+    const id = s?.tipo === "cliente" ? s.clienteId : undefined;
     if (!id) return null;
     return {
       saldo: saldoDe(id),
