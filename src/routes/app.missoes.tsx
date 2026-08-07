@@ -37,7 +37,7 @@ const tipos: { valor: MissaoTipo | "todas"; label: string }[] = [
 function Missoes() {
   const cliente = useClienteAtual();
   const id = cliente?.id;
-  const [lista, atualizar] = useStore(() => {
+  const [lista] = useStore(() => {
     if (!id)
       return [] as {
         m: Missao;
