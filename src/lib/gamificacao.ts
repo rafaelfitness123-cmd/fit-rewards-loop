@@ -22,9 +22,10 @@ import {
 } from "./db";
 
 export const diaKey = (d: Date) =>
-  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
-    d.getDate(),
-  ).padStart(2, "0")}`;
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(
+    2,
+    "0",
+  )}`;
 
 export function semanaKey(d: Date) {
   const t = new Date(d.getFullYear(), d.getMonth(), d.getDate());
@@ -154,9 +155,7 @@ export function duracaoMinutos(t: Treino) {
   if (!t.saida) return 0;
   return Math.max(
     0,
-    Math.round(
-      (new Date(t.saida).getTime() - new Date(t.entrada).getTime()) / 60000,
-    ),
+    Math.round((new Date(t.saida).getTime() - new Date(t.entrada).getTime()) / 60000),
   );
 }
 
@@ -167,11 +166,7 @@ export function formatarDuracao(min: number) {
 }
 
 // ---------- missões ----------
-export function progressoDaMissao(
-  clienteId: string,
-  m: Missao,
-  ref = new Date(),
-): ProgressoMissao {
+export function progressoDaMissao(clienteId: string, m: Missao, ref = new Date()): ProgressoMissao {
   const periodo = periodoDaMissao(m, ref);
   const id = `${clienteId}|${m.id}|${periodo}`;
   const existente = getProgressos().find((p) => p.id === id);
@@ -216,8 +211,7 @@ function calcularProgresso(clienteId: string, m: Missao, ref: Date) {
     if (inicio && d < inicio) continue;
     if (limiteInicio && d < limiteInicio) continue;
     if (limiteFim && d > limiteFim) continue;
-    if (m.objetivo === "dia_semana" && m.diaSemana !== null && d.getDay() !== m.diaSemana)
-      continue;
+    if (m.objetivo === "dia_semana" && m.diaSemana !== null && d.getDay() !== m.diaSemana) continue;
     dias.add(diaKey(d));
   }
   return dias.size;
@@ -354,7 +348,6 @@ export function registrarScan(clienteId: string, codigo: string): ScanResultado 
     };
   }
 
-
   const pontosDia = getConfigDias()[String(agora.getDay())] ?? 0;
   const pontosEntrada = pontosDia + (config.pontosCheckin ?? 0);
   const novo: Treino = {
@@ -367,8 +360,7 @@ export function registrarScan(clienteId: string, codigo: string): ScanResultado 
     pontosSaida: 0,
   };
   setTreinos([novo, ...treinos]);
-  if (pontosEntrada)
-    addPontos(clienteId, pontosEntrada, `Treino de ${diaNome(agora.getDay())}`);
+  if (pontosEntrada) addPontos(clienteId, pontosEntrada, `Treino de ${diaNome(agora.getDay())}`);
 
   const detalhes: string[] = [];
   // bônus de sequência (uma vez por dia/streak alcançado)
@@ -455,17 +447,13 @@ export function aceitarMissao(clienteId: string, m: Missao) {
 }
 
 /** Distância em metros entre dois pontos GPS (fórmula de Haversine). */
-export function distanciaEntre(
-  a: { lat: number; lng: number },
-  b: { lat: number; lng: number },
-) {
+export function distanciaEntre(a: { lat: number; lng: number }, b: { lat: number; lng: number }) {
   const R = 6371000;
   const rad = (v: number) => (v * Math.PI) / 180;
   const dLat = rad(b.lat - a.lat);
   const dLng = rad(b.lng - a.lng);
   const s =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos(rad(a.lat)) * Math.cos(rad(b.lat)) * Math.sin(dLng / 2) ** 2;
+    Math.sin(dLat / 2) ** 2 + Math.cos(rad(a.lat)) * Math.cos(rad(b.lat)) * Math.sin(dLng / 2) ** 2;
   return 2 * R * Math.asin(Math.sqrt(s));
 }
 

@@ -79,8 +79,7 @@ function Missoes() {
           ))}
         </TabsList>
         {tipos.map((t) => {
-          const filtradas =
-            t.valor === "todas" ? lista : lista.filter((x) => x.m.tipo === t.valor);
+          const filtradas = t.valor === "todas" ? lista : lista.filter((x) => x.m.tipo === t.valor);
           return (
             <TabsContent key={t.valor} value={t.valor} className="space-y-3 pt-4">
               {filtradas.length === 0 ? (
@@ -107,9 +106,7 @@ function Missoes() {
                           )}
                           {m.nome}
                         </p>
-                        <p className="mt-1 text-xs text-muted-foreground">
-                          {m.descricao}
-                        </p>
+                        <p className="mt-1 text-xs text-muted-foreground">{m.descricao}</p>
                       </div>
                       <span className="shrink-0 rounded-full bg-primary/15 px-2.5 py-1 text-xs font-bold text-primary">
                         +{m.pontos} pts
@@ -136,7 +133,6 @@ function Missoes() {
                     </p>
                   </Link>
                 ))
-
               )}
             </TabsContent>
           );

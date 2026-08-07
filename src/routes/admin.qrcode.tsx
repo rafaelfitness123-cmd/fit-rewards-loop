@@ -41,8 +41,7 @@ function QRAdmin() {
       codigo,
       nome: nome.trim() || "QR Code",
       criadoEm: new Date().toISOString(),
-      expiraEm:
-        h > 0 ? new Date(Date.now() + h * 3600000).toISOString() : null,
+      expiraEm: h > 0 ? new Date(Date.now() + h * 3600000).toISOString() : null,
       ativo: true,
     };
     setQRs([item, ...getQRs()]);
@@ -76,12 +75,7 @@ function QRAdmin() {
         </div>
         <div className="space-y-2">
           <Label>Validade (horas)</Label>
-          <Input
-            type="number"
-            min={0}
-            value={horas}
-            onChange={(e) => setHoras(e.target.value)}
-          />
+          <Input type="number" min={0} value={horas} onChange={(e) => setHoras(e.target.value)} />
         </div>
         <Button className="font-bold" onClick={criar}>
           Gerar QR Code
@@ -90,9 +84,7 @@ function QRAdmin() {
 
       <section className="grid gap-4 md:grid-cols-2">
         {lista.length === 0 && (
-          <p className="surface p-4 text-sm text-muted-foreground">
-            Nenhum QR Code criado.
-          </p>
+          <p className="surface p-4 text-sm text-muted-foreground">Nenhum QR Code criado.</p>
         )}
         {lista.map((q) => (
           <QrCard key={q.id} item={q} onToggle={alternar} onDelete={excluir} />
@@ -183,4 +175,3 @@ function QrCard({
     </article>
   );
 }
-

@@ -100,9 +100,7 @@ function DetalheMissao() {
 
       <section className="surface space-y-3 p-4">
         <div className="flex items-center justify-between gap-3">
-          <span className="text-xs font-semibold uppercase text-muted-foreground">
-            {m.tipo}
-          </span>
+          <span className="text-xs font-semibold uppercase text-muted-foreground">{m.tipo}</span>
           <span className="rounded-full bg-primary/15 px-2.5 py-1 text-xs font-bold text-primary">
             +{m.pontos} pts
           </span>
