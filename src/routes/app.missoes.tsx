@@ -88,17 +88,21 @@ function Missoes() {
                 </p>
               ) : (
                 filtradas.map(({ m, progresso, concluida, aceita }) => (
-                  <article
+                  <Link
                     key={m.id}
-                    className={`surface p-4 ${concluida ? "border-primary/50" : ""}`}
+                    to="/app/missao/$id"
+                    params={{ id: m.id }}
+                    className={`surface block p-4 transition-colors active:opacity-80 ${
+                      concluida ? "border-primary/50" : ""
+                    }`}
                   >
                     <div className="flex items-start justify-between gap-3">
-                      <div>
+                      <div className="min-w-0">
                         <p className="flex items-center gap-2 font-semibold">
                           {concluida ? (
-                            <CheckCircle2 className="size-4 text-primary" />
+                            <CheckCircle2 className="size-4 shrink-0 text-primary" />
                           ) : (
-                            <Target className="size-4 text-muted-foreground" />
+                            <Target className="size-4 shrink-0 text-muted-foreground" />
                           )}
                           {m.nome}
                         </p>
@@ -121,30 +125,17 @@ function Missoes() {
                           ? `${(progresso / 1000).toFixed(2)} km de ${(m.quantidade / 1000).toFixed(2)} km`
                           : `${progresso}/${m.quantidade} concluídos`}
                     </p>
-                    {m.objetivo === "distancia" && !concluida && (
-                      <div className="mt-3">
-                        {aceita ? (
-                          <p className="text-[11px] font-semibold text-primary">
-                            Desafio aceito — registre sua corrida no botão de GPS.
-                          </p>
-                        ) : (
-                          <Button
-                            size="sm"
-                            className="w-full font-bold"
-                            onClick={() => {
-                              if (!id) return;
-                              aceitarMissao(id, m);
-                              atualizar();
-                              toast.success("Missão aceita! Bora correr.");
-                            }}
-                          >
-                            Aceitar missão
-                          </Button>
-                        )}
-                      </div>
-                    )}
-                  </article>
+                    <p className="mt-2 flex items-center gap-1 text-[11px] font-semibold text-primary">
+                      {m.objetivo === "distancia" && !aceita
+                        ? "Abrir missão para aceitar o desafio"
+                        : m.objetivo === "distancia"
+                          ? "Abrir missão para correr com GPS"
+                          : "Ver detalhes da missão"}
+                      <ChevronRight className="size-3" />
+                    </p>
+                  </Link>
                 ))
+
               )}
             </TabsContent>
           );
