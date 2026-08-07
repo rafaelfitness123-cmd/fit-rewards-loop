@@ -5,9 +5,8 @@ import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getMissoes, type Missao, type MissaoTipo } from "@/lib/db";
 import { useClienteAtual, useStore } from "@/lib/session";
-import { aceitarMissao, missaoVigente, progressoDaMissao } from "@/lib/gamificacao";
-import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
+import { missaoVigente, progressoDaMissao } from "@/lib/gamificacao";
+
 
 export const Route = createFileRoute("/app/missoes")({
   head: () => ({
