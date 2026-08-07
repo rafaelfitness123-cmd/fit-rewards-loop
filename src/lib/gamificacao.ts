@@ -72,9 +72,11 @@ export function missaoVigente(m: Missao, d = new Date()) {
 // ---------- pontos ----------
 export function addPontos(clienteId: string, delta: number, motivo: string) {
   if (!delta) return;
-  const pontos = getPontos();
+  // cópia obrigatória: setPontos compara com o cache anterior para saber o que salvar
+  const pontos = { ...getPontos() };
   pontos[clienteId] = Math.max(0, (pontos[clienteId] ?? 0) + delta);
   setPontos(pontos);
+
   const hist = getHistorico();
   const item: HistoricoPonto = {
     id: uid(),
