@@ -1,5 +1,6 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { CheckCircle2, Target } from "lucide-react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { CheckCircle2, ChevronRight, Target } from "lucide-react";
+
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getMissoes, type Missao, type MissaoTipo } from "@/lib/db";
