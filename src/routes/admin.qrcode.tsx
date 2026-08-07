@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { getQRs, setQRs, uid, type QRCodeItem } from "@/lib/db";
 import { useStore } from "@/lib/session";
-import { fmtDataHora } from "@/lib/gamificacao";
+import { fmtDataHora, janelaAtual, msRestantesJanela, tokenQR } from "@/lib/gamificacao";
 
 export const Route = createFileRoute("/admin/qrcode")({
   head: () => ({
@@ -41,8 +41,7 @@ function QRAdmin() {
       codigo,
       nome: nome.trim() || "QR Code",
       criadoEm: new Date().toISOString(),
-      expiraEm:
-        h > 0 ? new Date(Date.now() + h * 3600000).toISOString() : null,
+      expiraEm: h > 0 ? new Date(Date.now() + h * 3600000).toISOString() : null,
       ativo: true,
     };
     setQRs([item, ...getQRs()]);
@@ -76,12 +75,7 @@ function QRAdmin() {
         </div>
         <div className="space-y-2">
           <Label>Validade (horas)</Label>
-          <Input
-            type="number"
-            min={0}
-            value={horas}
-            onChange={(e) => setHoras(e.target.value)}
-          />
+          <Input type="number" min={0} value={horas} onChange={(e) => setHoras(e.target.value)} />
         </div>
         <Button className="font-bold" onClick={criar}>
           Gerar QR Code
@@ -90,9 +84,7 @@ function QRAdmin() {
 
       <section className="grid gap-4 md:grid-cols-2">
         {lista.length === 0 && (
-          <p className="surface p-4 text-sm text-muted-foreground">
-            Nenhum QR Code criado.
-          </p>
+          <p className="surface p-4 text-sm text-muted-foreground">Nenhum QR Code criado.</p>
         )}
         {lista.map((q) => (
           <QrCard key={q.id} item={q} onToggle={alternar} onDelete={excluir} />
@@ -112,11 +104,24 @@ function QrCard({
   onDelete: (id: string) => void;
 }) {
   const [img, setImg] = useState<string | null>(null);
+  const [janela, setJanela] = useState(() => janelaAtual());
+  const [restante, setRestante] = useState(() => msRestantesJanela());
+
+  // renova o código a cada 10 minutos
+  useEffect(() => {
+    const t = setInterval(() => {
+      setJanela(janelaAtual());
+      setRestante(msRestantesJanela());
+    }, 1000);
+    return () => clearInterval(t);
+  }, []);
+
+  const token = tokenQR(item.codigo, janela);
 
   useEffect(() => {
     let cancelado = false;
     import("qrcode").then(async (mod) => {
-      const url = await mod.default.toDataURL(item.codigo, {
+      const url = await mod.default.toDataURL(token, {
         width: 320,
         margin: 1,
         color: { dark: "#0d0f14", light: "#ffffff" },
@@ -126,16 +131,18 @@ function QrCard({
     return () => {
       cancelado = true;
     };
-  }, [item.codigo]);
+  }, [token]);
 
   const expirado = item.expiraEm && new Date(item.expiraEm).getTime() < Date.now();
+  const mm = Math.floor(restante / 60000);
+  const ss = Math.floor((restante % 60000) / 1000);
 
   return (
     <article className="surface p-4">
       <div className="flex items-start justify-between gap-3">
-        <div>
+        <div className="min-w-0">
           <p className="font-bold">{item.nome}</p>
-          <p className="font-mono text-sm text-primary">{item.codigo}</p>
+          <p className="break-all font-mono text-sm text-primary">{token}</p>
           <p className="mt-1 text-[11px] text-muted-foreground">
             Criado em {fmtDataHora(item.criadoEm)}
           </p>
@@ -155,10 +162,16 @@ function QrCard({
       {img && (
         <img
           src={img}
-          alt={`QR Code ${item.codigo}`}
+          alt={`QR Code ${item.nome}`}
           className="mx-auto mt-3 w-48 rounded-xl bg-white p-2"
         />
       )}
+      <p className="mt-2 text-center text-[11px] font-semibold text-muted-foreground tabular-nums">
+        Novo código em {String(mm).padStart(2, "0")}:{String(ss).padStart(2, "0")}
+      </p>
+      <p className="mt-1 text-center text-[11px] text-muted-foreground">
+        Deixe esta tela aberta na recepção — o código muda sozinho a cada 10 minutos.
+      </p>
     </article>
   );
 }

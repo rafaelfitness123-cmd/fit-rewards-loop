@@ -1,6 +1,6 @@
 import { Link, Outlet, createFileRoute, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useEffect } from "react";
-import { Footprints, Home, ListChecks, QrCode, Star, Trophy, User } from "lucide-react";
+import { Home, ListChecks, QrCode, Star, Trophy, User } from "lucide-react";
 import { getSessao } from "@/lib/db";
 import { iniciarDados, useCachePronto, useClienteAtual } from "@/lib/session";
 
@@ -44,13 +44,6 @@ function AppLayout() {
       <div className="pointer-events-none fixed inset-x-0 bottom-[calc(4.75rem+env(safe-area-inset-bottom))] z-20 mx-auto flex w-full max-w-lg justify-end px-4">
         <div className="pointer-events-auto flex flex-col gap-3">
           <Link
-            to="/app/corrida"
-            aria-label="Iniciar corrida com GPS"
-            className="flex size-12 items-center justify-center rounded-full bg-secondary text-secondary-foreground shadow-lg transition-transform active:scale-95"
-          >
-            <Footprints className="size-5" />
-          </Link>
-          <Link
             to="/app/scan"
             aria-label="Escanear QR Code"
             className="flex size-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-[var(--shadow-glow)] transition-transform active:scale-95"
@@ -63,9 +56,7 @@ function AppLayout() {
       <nav className="fixed inset-x-0 bottom-0 z-10 border-t border-border bg-card/95 pb-[env(safe-area-inset-bottom)] backdrop-blur">
         <ul className="mx-auto grid w-full max-w-lg grid-cols-5">
           {nav.map((item) => {
-            const active = item.exact
-              ? pathname === item.to
-              : pathname.startsWith(item.to);
+            const active = item.exact ? pathname === item.to : pathname.startsWith(item.to);
             return (
               <li key={item.to} className="min-w-0">
                 <Link

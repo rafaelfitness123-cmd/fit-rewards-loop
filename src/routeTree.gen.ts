@@ -23,12 +23,12 @@ import { Route as AdminRecompensasRouteImport } from './routes/admin.recompensas
 import { Route as AdminResgatesRouteImport } from './routes/admin.resgates'
 import { Route as AdminTreinosRouteImport } from './routes/admin.treinos'
 import { Route as AppIndexRouteImport } from './routes/app.index'
-import { Route as AppCorridaRouteImport } from './routes/app.corrida'
 import { Route as AppMissoesRouteImport } from './routes/app.missoes'
 import { Route as AppPerfilRouteImport } from './routes/app.perfil'
 import { Route as AppPontosRouteImport } from './routes/app.pontos'
 import { Route as AppRankingRouteImport } from './routes/app.ranking'
 import { Route as AppScanRouteImport } from './routes/app.scan'
+import { Route as AppMissaoIdRouteImport } from './routes/app.missao.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -100,11 +100,6 @@ const AppIndexRoute = AppIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AppRoute,
 } as any)
-const AppCorridaRoute = AppCorridaRouteImport.update({
-  id: '/corrida',
-  path: '/corrida',
-  getParentRoute: () => AppRoute,
-} as any)
 const AppMissoesRoute = AppMissoesRouteImport.update({
   id: '/missoes',
   path: '/missoes',
@@ -130,6 +125,11 @@ const AppScanRoute = AppScanRouteImport.update({
   path: '/scan',
   getParentRoute: () => AppRoute,
 } as any)
+const AppMissaoIdRoute = AppMissaoIdRouteImport.update({
+  id: '/missao/$id',
+  path: '/missao/$id',
+  getParentRoute: () => AppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -144,7 +144,6 @@ export interface FileRoutesByFullPath {
   '/admin/recompensas': typeof AdminRecompensasRoute
   '/admin/resgates': typeof AdminResgatesRoute
   '/admin/treinos': typeof AdminTreinosRoute
-  '/app/corrida': typeof AppCorridaRoute
   '/app/missoes': typeof AppMissoesRoute
   '/app/perfil': typeof AppPerfilRoute
   '/app/pontos': typeof AppPontosRoute
@@ -152,6 +151,7 @@ export interface FileRoutesByFullPath {
   '/app/scan': typeof AppScanRoute
   '/admin/': typeof AdminIndexRoute
   '/app/': typeof AppIndexRoute
+  '/app/missao/$id': typeof AppMissaoIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -164,7 +164,6 @@ export interface FileRoutesByTo {
   '/admin/recompensas': typeof AdminRecompensasRoute
   '/admin/resgates': typeof AdminResgatesRoute
   '/admin/treinos': typeof AdminTreinosRoute
-  '/app/corrida': typeof AppCorridaRoute
   '/app/missoes': typeof AppMissoesRoute
   '/app/perfil': typeof AppPerfilRoute
   '/app/pontos': typeof AppPontosRoute
@@ -172,6 +171,7 @@ export interface FileRoutesByTo {
   '/app/scan': typeof AppScanRoute
   '/admin': typeof AdminIndexRoute
   '/app': typeof AppIndexRoute
+  '/app/missao/$id': typeof AppMissaoIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -187,7 +187,6 @@ export interface FileRoutesById {
   '/admin/recompensas': typeof AdminRecompensasRoute
   '/admin/resgates': typeof AdminResgatesRoute
   '/admin/treinos': typeof AdminTreinosRoute
-  '/app/corrida': typeof AppCorridaRoute
   '/app/missoes': typeof AppMissoesRoute
   '/app/perfil': typeof AppPerfilRoute
   '/app/pontos': typeof AppPontosRoute
@@ -195,6 +194,7 @@ export interface FileRoutesById {
   '/app/scan': typeof AppScanRoute
   '/admin/': typeof AdminIndexRoute
   '/app/': typeof AppIndexRoute
+  '/app/missao/$id': typeof AppMissaoIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -211,7 +211,6 @@ export interface FileRouteTypes {
     | '/admin/recompensas'
     | '/admin/resgates'
     | '/admin/treinos'
-    | '/app/corrida'
     | '/app/missoes'
     | '/app/perfil'
     | '/app/pontos'
@@ -219,6 +218,7 @@ export interface FileRouteTypes {
     | '/app/scan'
     | '/admin/'
     | '/app/'
+    | '/app/missao/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -231,7 +231,6 @@ export interface FileRouteTypes {
     | '/admin/recompensas'
     | '/admin/resgates'
     | '/admin/treinos'
-    | '/app/corrida'
     | '/app/missoes'
     | '/app/perfil'
     | '/app/pontos'
@@ -239,6 +238,7 @@ export interface FileRouteTypes {
     | '/app/scan'
     | '/admin'
     | '/app'
+    | '/app/missao/$id'
   id:
     | '__root__'
     | '/'
@@ -253,7 +253,6 @@ export interface FileRouteTypes {
     | '/admin/recompensas'
     | '/admin/resgates'
     | '/admin/treinos'
-    | '/app/corrida'
     | '/app/missoes'
     | '/app/perfil'
     | '/app/pontos'
@@ -261,6 +260,7 @@ export interface FileRouteTypes {
     | '/app/scan'
     | '/admin/'
     | '/app/'
+    | '/app/missao/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -369,13 +369,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppIndexRouteImport
       parentRoute: typeof AppRoute
     }
-    '/app/corrida': {
-      id: '/app/corrida'
-      path: '/corrida'
-      fullPath: '/app/corrida'
-      preLoaderRoute: typeof AppCorridaRouteImport
-      parentRoute: typeof AppRoute
-    }
     '/app/missoes': {
       id: '/app/missoes'
       path: '/missoes'
@@ -411,6 +404,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppScanRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/missao/$id': {
+      id: '/app/missao/$id'
+      path: '/missao/$id'
+      fullPath: '/app/missao/$id'
+      preLoaderRoute: typeof AppMissaoIdRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
@@ -443,23 +443,23 @@ const AdminRouteChildren: AdminRouteChildren = {
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
 interface AppRouteChildren {
-  AppCorridaRoute: typeof AppCorridaRoute
   AppMissoesRoute: typeof AppMissoesRoute
   AppPerfilRoute: typeof AppPerfilRoute
   AppPontosRoute: typeof AppPontosRoute
   AppRankingRoute: typeof AppRankingRoute
   AppScanRoute: typeof AppScanRoute
   AppIndexRoute: typeof AppIndexRoute
+  AppMissaoIdRoute: typeof AppMissaoIdRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
-  AppCorridaRoute: AppCorridaRoute,
   AppMissoesRoute: AppMissoesRoute,
   AppPerfilRoute: AppPerfilRoute,
   AppPontosRoute: AppPontosRoute,
   AppRankingRoute: AppRankingRoute,
   AppScanRoute: AppScanRoute,
   AppIndexRoute: AppIndexRoute,
+  AppMissaoIdRoute: AppMissaoIdRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
