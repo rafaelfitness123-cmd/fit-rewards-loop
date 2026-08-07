@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { getQRs, setQRs, uid, type QRCodeItem } from "@/lib/db";
 import { useStore } from "@/lib/session";
-import { fmtDataHora } from "@/lib/gamificacao";
+import { fmtDataHora, janelaAtual, msRestantesJanela, tokenQR } from "@/lib/gamificacao";
 
 export const Route = createFileRoute("/admin/qrcode")({
   head: () => ({
