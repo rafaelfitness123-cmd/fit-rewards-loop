@@ -271,13 +271,36 @@ export type ScanResultado = {
   detalhes?: string[];
 };
 
-export function validarQR(codigo: string) {
-  const limpo = codigo.trim().toUpperCase();
-  const qr = getQRs().find((q) => q.codigo.toUpperCase() === limpo);
+// ---------- QR rotativo ----------
+/** O código exibido muda a cada 10 minutos (evita foto compartilhada). */
+export const JANELA_MS = 10 * 60 * 1000;
+export const janelaAtual = (t: number = Date.now()) => Math.floor(t / JANELA_MS);
+export const msRestantesJanela = (t: number = Date.now()) => JANELA_MS - (t % JANELA_MS);
+/** Token exibido no QR: código base + janela de tempo atual. */
+export const tokenQR = (codigo: string, janela: number = janelaAtual()) =>
+  `${codigo.toUpperCase()}.${janela.toString(36).toUpperCase()}`;
+
+export function validarQR(entrada: string) {
+  const limpo = entrada.trim().toUpperCase();
+  const sep = limpo.lastIndexOf(".");
+  if (sep <= 0)
+    return {
+      valido: false,
+      motivo: "Código incompleto. Escaneie o QR Code que está na tela da recepção.",
+    };
+  const base = limpo.slice(0, sep);
+  const janela = parseInt(limpo.slice(sep + 1), 36);
+  const qr = getQRs().find((q) => q.codigo.toUpperCase() === base);
   if (!qr) return { valido: false, motivo: "QR Code inválido." };
   if (!qr.ativo) return { valido: false, motivo: "Este QR Code está desativado." };
   if (qr.expiraEm && new Date(qr.expiraEm).getTime() < Date.now())
     return { valido: false, motivo: "Este QR Code expirou." };
+  if (!Number.isFinite(janela) || Math.abs(janelaAtual() - janela) > 1)
+    return {
+      valido: false,
+      motivo:
+        "Este código já mudou (ele é renovado a cada 10 minutos). Escaneie o QR Code atual da recepção.",
+    };
   return { valido: true, motivo: "" };
 }
 
@@ -291,6 +314,15 @@ export function registrarScan(clienteId: string, codigo: string): ScanResultado 
   const agora = new Date();
 
   if (aberto) {
+    // evita que o mesmo scan conte como entrada e saída
+    const desdeEntrada = (agora.getTime() - new Date(aberto.entrada).getTime()) / 60000;
+    if (desdeEntrada < 1) {
+      return {
+        ok: false,
+        tipo: "erro",
+        mensagem: "Entrada acabou de ser registrada. Escaneie novamente ao sair.",
+      };
+    }
     // check-out
     const idx = treinos.findIndex((t) => t.id === aberto.id);
     let pontosSaida = 0;
@@ -309,21 +341,19 @@ export function registrarScan(clienteId: string, codigo: string): ScanResultado 
     };
   }
 
-  // impedir novo treino logo após finalizar (evita duplicação de pontos)
-  const ultimo = treinos
-    .filter((t) => t.clienteId === clienteId && t.saida)
-    .sort((a, b) => (b.saida ?? "").localeCompare(a.saida ?? ""))[0];
-  if (ultimo?.saida) {
-    const diffMin = (agora.getTime() - new Date(ultimo.saida).getTime()) / 60000;
-    if (diffMin < config.minutosEntreTreinos) {
-      const restante = Math.ceil(config.minutosEntreTreinos - diffMin);
-      return {
-        ok: false,
-        tipo: "erro",
-        mensagem: `Treino já finalizado. Aguarde ${restante} min para iniciar um novo treino.`,
-      };
-    }
+  // regra: apenas 2 leituras por dia (entrada + saída)
+  const hoje = diaKey(agora);
+  const treinoDeHoje = treinos.find(
+    (t) => t.clienteId === clienteId && diaKey(new Date(t.entrada)) === hoje && t.saida,
+  );
+  if (treinoDeHoje) {
+    return {
+      ok: false,
+      tipo: "erro",
+      mensagem: "Você já registrou entrada e saída hoje. Volte amanhã 💪",
+    };
   }
+
 
   const pontosDia = getConfigDias()[String(agora.getDay())] ?? 0;
   const pontosEntrada = pontosDia + (config.pontosCheckin ?? 0);
