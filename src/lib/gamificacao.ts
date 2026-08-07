@@ -207,7 +207,7 @@ function calcularProgresso(clienteId: string, m: Missao, ref: Date) {
       if (limiteFim && d > limiteFim) continue;
       metros += c.distanciaM;
     }
-    return Math.round((metros / 1000) * 100) / 100;
+    return Math.round(metros);
   }
 
   const dias = new Set<string>();
