@@ -83,6 +83,7 @@ const fmtTempo = (s: number) =>
 
 function DetalheMissao() {
   const { id: missaoId } = useParams({ from: "/app/missao/$id" });
+  const navigate = useNavigate();
   const cliente = useClienteAtual();
   const clienteId = cliente?.id;
 
@@ -97,6 +98,24 @@ function DetalheMissao() {
         .slice(0, 10),
     };
   });
+
+  // Último percurso finalizado nesta sessão (mantém o traçado GPS para o post).
+  const [ultimo, setUltimo] = useState<
+    { metros: number; duracaoS: number; trilha: { lat: number; lng: number }[] } | null
+  >(null);
+
+  const compartilhar = useCallback(
+    (snapshot: MissaoSnapshot, idMissao: string | null) => {
+      guardarRascunhoMissao({
+        missaoId: idMissao,
+        missao: snapshot,
+        legenda: legendaSugerida(snapshot),
+      });
+      void navigate({ to: "/app/comunidade/novo" });
+    },
+    [navigate],
+  );
+
 
   if (!cliente) return null;
 
