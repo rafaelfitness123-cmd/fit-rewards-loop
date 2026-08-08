@@ -208,12 +208,25 @@ function RastreadorGps({
   const [metros, setMetros] = useState(0);
   const [segundos, setSegundos] = useState(0);
   const [erro, setErro] = useState<string | null>(null);
+  const [emIframe, setEmIframe] = useState(false);
   const watchRef = useRef<number | null>(null);
   const ultimoRef = useRef<{ lat: number; lng: number } | null>(null);
 
+  useEffect(() => {
+    try {
+      setEmIframe(window.self !== window.top);
+    } catch {
+      setEmIframe(true);
+    }
+  }, []);
+
   const limpar = () => {
-    if (watchRef.current !== null && typeof navigator !== "undefined" && navigator.geolocation) {
-      navigator.geolocation.clearWatch(watchRef.current);
+    try {
+      if (watchRef.current !== null && typeof navigator !== "undefined" && navigator.geolocation) {
+        navigator.geolocation.clearWatch(watchRef.current);
+      }
+    } catch {
+      /* ignora */
     }
     watchRef.current = null;
   };
@@ -226,43 +239,71 @@ function RastreadorGps({
 
   useEffect(() => limpar, []);
 
+  const mensagemErroGeo = (code?: number) => {
+    if (code === 1)
+      return emIframe
+        ? "O navegador bloqueou o GPS dentro do preview. Abra o app em uma aba separada e autorize a localização."
+        : "Permissão de localização negada. Autorize o GPS nas configurações do navegador e tente novamente.";
+    if (code === 2) return "Sinal de GPS indisponível. Vá para um local aberto e tente novamente.";
+    if (code === 3) return "O GPS demorou para responder. Tente novamente.";
+    return "Não foi possível acessar sua localização. Autorize o GPS e tente de novo.";
+  };
+
   const iniciar = () => {
-    if (typeof navigator === "undefined" || !navigator.geolocation) {
-      setErro("Este dispositivo não suporta GPS.");
-      return;
-    }
-    if (typeof window !== "undefined" && !window.isSecureContext) {
-      setErro("O GPS só funciona em conexão segura (https).");
-      return;
-    }
-    setErro(null);
-    setMetros(0);
-    setSegundos(0);
-    ultimoRef.current = null;
-    setAtivo(true);
     try {
-      watchRef.current = navigator.geolocation.watchPosition(
-        (pos) => {
-          const ponto = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-          const anterior = ultimoRef.current;
-          if (!anterior) {
-            ultimoRef.current = ponto;
-            return;
-          }
-          const d = distanciaEntre(anterior, ponto);
-          if (d > 3 && d < 200 && (pos.coords.accuracy ?? 99) < 50) {
-            setMetros((mm) => mm + d);
-            ultimoRef.current = ponto;
-          }
-        },
+      if (typeof navigator === "undefined" || !navigator.geolocation) {
+        setErro("Este dispositivo/navegador não suporta GPS.");
+        return;
+      }
+      if (typeof window !== "undefined" && !window.isSecureContext) {
+        setErro("O GPS só funciona em conexão segura (https).");
+        return;
+      }
+      setErro(null);
+      setMetros(0);
+      setSegundos(0);
+      ultimoRef.current = null;
+
+      // pede a permissão antes de abrir o watch contínuo
+      navigator.geolocation.getCurrentPosition(
         () => {
-          limpar();
-          setAtivo(false);
-          setErro(
-            "Não foi possível acessar sua localização. Autorize o GPS no navegador e tente de novo.",
-          );
+          try {
+            setAtivo(true);
+            watchRef.current = navigator.geolocation.watchPosition(
+              (pos) => {
+                try {
+                  const ponto = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+                  const anterior = ultimoRef.current;
+                  if (!anterior) {
+                    ultimoRef.current = ponto;
+                    return;
+                  }
+                  const d = distanciaEntre(anterior, ponto);
+                  if (d > 3 && d < 200 && (pos.coords.accuracy ?? 99) < 50) {
+                    setMetros((mm) => mm + d);
+                    ultimoRef.current = ponto;
+                  }
+                } catch {
+                  /* ignora leitura inválida */
+                }
+              },
+              (err) => {
+                limpar();
+                setAtivo(false);
+                setErro(mensagemErroGeo(err?.code));
+              },
+              { enableHighAccuracy: true, maximumAge: 0, timeout: 30000 },
+            );
+          } catch {
+            setAtivo(false);
+            setErro("Não foi possível iniciar o rastreamento neste dispositivo.");
+          }
         },
-        { enableHighAccuracy: true, maximumAge: 0, timeout: 20000 },
+        (err) => {
+          setAtivo(false);
+          setErro(mensagemErroGeo(err?.code));
+        },
+        { enableHighAccuracy: true, timeout: 30000, maximumAge: 0 },
       );
     } catch {
       setAtivo(false);
@@ -279,9 +320,13 @@ function RastreadorGps({
       setSegundos(0);
       return;
     }
-    const concluidas = registrarCorrida(clienteId, missaoId, metros, segundos);
-    toast.success(`Percurso registrado: ${fmtDistancia(metros)}`);
-    onFim(concluidas);
+    try {
+      const concluidas = registrarCorrida(clienteId, missaoId, metros, segundos);
+      toast.success(`Percurso registrado: ${fmtDistancia(metros)}`);
+      onFim(concluidas);
+    } catch {
+      toast.error("Não foi possível salvar o percurso. Tente novamente.");
+    }
     setMetros(0);
     setSegundos(0);
   };
@@ -296,7 +341,21 @@ function RastreadorGps({
       <p className="mt-1 text-sm text-muted-foreground tabular-nums">
         {fmtTempo(segundos)} em movimento
       </p>
-      {erro && <p className="mt-3 text-xs text-destructive">{erro}</p>}
+      {erro && (
+        <div className="mt-3 space-y-2">
+          <p className="text-xs text-destructive">{erro}</p>
+          {emIframe && (
+            <a
+              href={typeof window !== "undefined" ? window.location.href : "#"}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-block text-xs font-semibold text-primary underline"
+            >
+              Abrir em uma aba separada
+            </a>
+          )}
+        </div>
+      )}
       <Button
         className="mt-5 w-full font-bold"
         variant={ativo ? "secondary" : "default"}
@@ -318,3 +377,4 @@ function RastreadorGps({
     </section>
   );
 }
+
