@@ -526,7 +526,9 @@ function MapaPercurso({
     y: 20 + ((maxLat - p.lat) / latSpan) * (altura - 40),
   });
   const linha = pontos.map((p) => projetar(p)).map((p) => `${p.x},${p.y}`).join(" ");
-  const atual = projetar(pontos[pontos.length - 1]);
+  const ultimo = pontos.at(-1);
+  if (!ultimo) return null;
+  const atual = projetar(ultimo);
 
   return (
     <div className="relative h-48 border-b border-border bg-muted/30">
