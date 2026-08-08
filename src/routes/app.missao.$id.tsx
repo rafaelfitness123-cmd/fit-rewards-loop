@@ -315,7 +315,11 @@ function RastreadorGps({
   clienteId: string;
   missaoId: string;
   metaM: number;
-  onFim: (nomes: string[]) => void;
+  onFim: (
+    nomes: string[],
+    final: { metros: number; duracaoS: number; trilha: { lat: number; lng: number }[] },
+  ) => void;
+
 }) {
   const [estado, setEstado] = useState<EstadoRastreio>(() => rastreador.ler());
   const [emIframe, setEmIframe] = useState(false);
