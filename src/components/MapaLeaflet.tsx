@@ -139,7 +139,7 @@ export default function MapaLeaflet({
   };
 
   return (
-    <div className="relative h-56 w-full border-b border-border">
+    <div className="relative isolate h-56 w-full border-b border-border">
       <div ref={containerRef} className="h-full w-full bg-muted" />
       {!atual && (
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-background/70 text-center text-xs text-muted-foreground">
