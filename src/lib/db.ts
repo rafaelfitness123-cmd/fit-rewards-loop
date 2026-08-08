@@ -108,6 +108,8 @@ export type ConfigGamificacao = {
   pontosCheckout: number;
   bonusSequencia: BonusSequencia[];
   minutosEntreTreinos: number;
+  /** Tempo mínimo de permanência (min) para receber os pontos do dia. */
+  minutosMinimosTreino: number;
 };
 
 export type ConfigDias = Record<string, number>;
