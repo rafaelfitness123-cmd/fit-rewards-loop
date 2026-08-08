@@ -35,6 +35,14 @@ export const Route = createFileRoute("/app/missao/$id")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
+  errorComponent: () => (
+    <div className="space-y-4">
+      <Voltar />
+      <p className="surface p-4 text-sm text-muted-foreground">
+        Algo deu errado ao carregar esta missão. Volte e abra novamente.
+      </p>
+    </div>
+  ),
   component: DetalheMissao,
 });
 
