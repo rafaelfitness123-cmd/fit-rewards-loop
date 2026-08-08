@@ -103,8 +103,11 @@ function Perfil() {
         ))}
       </section>
 
-      <Tabs defaultValue="treinos">
+      <Tabs defaultValue="publicacoes">
         <TabsList className="w-full">
+          <TabsTrigger value="publicacoes" className="flex-1 text-xs">
+            Publicações
+          </TabsTrigger>
           <TabsTrigger value="treinos" className="flex-1 text-xs">
             Treinos
           </TabsTrigger>
@@ -118,6 +121,16 @@ function Perfil() {
             Resgates
           </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="publicacoes" className="space-y-3 pt-4">
+          <Button asChild variant="secondary" className="w-full font-bold">
+            <Link to="/app/comunidade/novo">
+              <Plus className="mr-2 size-4" /> Criar publicação
+            </Link>
+          </Button>
+          <MinhasPublicacoes meuId={cliente.id} nome={cliente.nome} />
+        </TabsContent>
+
 
         <TabsContent value="treinos" className="space-y-2 pt-4">
           {dados.treinos.length === 0 && (
