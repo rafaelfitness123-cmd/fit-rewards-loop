@@ -105,6 +105,7 @@ function QrCard({
   onDelete: (id: string) => void;
 }) {
   const [img, setImg] = useState<string | null>(null);
+  const [cheia, setCheia] = useState(false);
   const [janela, setJanela] = useState(() => janelaAtual());
   const [restante, setRestante] = useState(() => msRestantesJanela());
 
@@ -123,7 +124,7 @@ function QrCard({
     let cancelado = false;
     import("qrcode").then(async (mod) => {
       const url = await mod.default.toDataURL(token, {
-        width: 320,
+        width: 1024,
         margin: 1,
         color: { dark: "#0d0f14", light: "#ffffff" },
       });
@@ -133,6 +134,18 @@ function QrCard({
       cancelado = true;
     };
   }, [token]);
+
+  // mantém a tela acesa enquanto o QR estiver em tela cheia
+  useEffect(() => {
+    if (!cheia) return;
+    let lock: { release: () => Promise<void> } | null = null;
+    const wl = (navigator as unknown as { wakeLock?: { request: (t: string) => Promise<any> } })
+      .wakeLock;
+    void wl?.request("screen").then((l: any) => (lock = l)).catch(() => null);
+    return () => {
+      void lock?.release().catch(() => null);
+    };
+  }, [cheia]);
 
   const expirado = item.expiraEm && new Date(item.expiraEm).getTime() < Date.now();
   const mm = Math.floor(restante / 60000);
@@ -161,18 +174,41 @@ function QrCard({
         </div>
       </div>
       {img && (
-        <img
-          src={img}
-          alt={`QR Code ${item.nome}`}
-          className="mx-auto mt-3 w-48 rounded-xl bg-white p-2"
-        />
+        <button
+          type="button"
+          onClick={() => setCheia(true)}
+          aria-label={`Abrir QR Code ${item.nome} em tela cheia`}
+          className="mx-auto mt-3 block w-48 rounded-xl bg-white p-2 transition-transform hover:scale-[1.03]"
+        >
+          <img src={img} alt={`QR Code ${item.nome}`} className="w-full" />
+        </button>
       )}
+      <Button variant="secondary" className="mt-3 w-full font-bold" onClick={() => setCheia(true)}>
+        <Maximize2 className="mr-2 size-4" /> Abrir em tela cheia
+      </Button>
       <p className="mt-2 text-center text-[11px] font-semibold text-muted-foreground tabular-nums">
         Novo código em {String(mm).padStart(2, "0")}:{String(ss).padStart(2, "0")}
       </p>
       <p className="mt-1 text-center text-[11px] text-muted-foreground">
         Deixe esta tela aberta na recepção — o código muda sozinho a cada 10 minutos.
       </p>
+
+      <Dialog open={cheia} onOpenChange={setCheia}>
+        <DialogContent className="flex h-[100dvh] w-screen max-w-none flex-col items-center justify-center gap-4 rounded-none border-0 bg-background p-4 sm:rounded-none">
+          <DialogTitle className="text-center text-lg font-black">{item.nome}</DialogTitle>
+          {img && (
+            <img
+              src={img}
+              alt={`QR Code ${item.nome} em tela cheia`}
+              className="aspect-square w-[min(90vw,70vh)] rounded-3xl bg-white p-4"
+            />
+          )}
+          <p className="break-all text-center font-mono text-sm text-primary">{token}</p>
+          <p className="text-center text-xs font-semibold text-muted-foreground tabular-nums">
+            Novo código em {String(mm).padStart(2, "0")}:{String(ss).padStart(2, "0")}
+          </p>
+        </DialogContent>
+      </Dialog>
     </article>
   );
 }
