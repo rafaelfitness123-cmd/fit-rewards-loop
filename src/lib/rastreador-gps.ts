@@ -51,8 +51,12 @@ export function haversine(
   return 2 * R * Math.asin(Math.sqrt(s));
 }
 
-/** Precisão pior que isto é descartada (ponto claramente inválido). */
-const ACC_MAX = 60;
+/**
+ * Precisão pior que isto é descartada (ponto claramente inválido).
+ * 120 m acomoda navegadores desktop / Chrome com localização por rede,
+ * que raramente entregam < 60 m — antes disso o contador nunca iniciava.
+ */
+const ACC_MAX = 120;
 /** Velocidade máxima plausível numa missão a pé (m/s) — acima disso é salto de GPS. */
 const VEL_MAX = 9;
 
@@ -93,7 +97,7 @@ export function validarDeslocamento(
   // Limiar adaptativo: parte da precisão do sinal, e afrouxa quando há
   // evidência independente de movimento (velocidade do GPS ou sequência
   // recente de deslocamentos aceitos). Nunca é um "sempre ignore < 10 m".
-  let limiar = Math.max(3, ponto.accuracy * 0.55);
+  let limiar = Math.min(25, Math.max(3, ponto.accuracy * 0.55));
   if (andando) limiar = Math.max(1.5, ponto.accuracy * 0.25);
   if (streakMovimento >= 2) limiar = Math.min(limiar, Math.max(1.5, ponto.accuracy * 0.3));
   // Se o intervalo entre fixes foi grande, um deslocamento maior é esperado.
@@ -276,11 +280,23 @@ class Rastreador {
 
   private ligarWatch() {
     if (this.watchId !== null) return;
+    // Primeiro fix imediato: o Chrome costuma demorar muito para o primeiro
+    // callback do watchPosition de alta precisão, o que fazia o contador
+    // parecer "travado" no início. Este pedido único ancora o percurso já.
+    try {
+      navigator.geolocation.getCurrentPosition(this.processar, () => {}, {
+        enableHighAccuracy: false,
+        maximumAge: 0,
+        timeout: 8000,
+      });
+    } catch {
+      /* ignora */
+    }
     this.watchId = navigator.geolocation.watchPosition(this.processar, this.erroGeo, {
       enableHighAccuracy: true,
-      // ~1 fix/s do sistema é suficiente para caminhada/corrida e evita
-      // consumo desnecessário de bateria.
-      maximumAge: 1000,
+      // Sempre um fix novo (o cache do Chrome congelava a posição) e
+      // ~1 fix/s do sistema já basta para caminhada/corrida.
+      maximumAge: 0,
       timeout: 30000,
     });
   }
