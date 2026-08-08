@@ -234,6 +234,146 @@ export type Database = {
           },
         ]
       }
+      publicacao_comentarios: {
+        Row: {
+          autor_id: string
+          created_at: string
+          id: string
+          publicacao_id: string
+          texto: string
+        }
+        Insert: {
+          autor_id: string
+          created_at?: string
+          id?: string
+          publicacao_id: string
+          texto?: string
+        }
+        Update: {
+          autor_id?: string
+          created_at?: string
+          id?: string
+          publicacao_id?: string
+          texto?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "publicacao_comentarios_publicacao_id_fkey"
+            columns: ["publicacao_id"]
+            isOneToOne: false
+            referencedRelation: "publicacoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      publicacao_curtidas: {
+        Row: {
+          created_at: string
+          id: string
+          publicacao_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          publicacao_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          publicacao_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "publicacao_curtidas_publicacao_id_fkey"
+            columns: ["publicacao_id"]
+            isOneToOne: false
+            referencedRelation: "publicacoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      publicacao_denuncias: {
+        Row: {
+          created_at: string
+          id: string
+          motivo: string
+          publicacao_id: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          motivo?: string
+          publicacao_id: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          motivo?: string
+          publicacao_id?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "publicacao_denuncias_publicacao_id_fkey"
+            columns: ["publicacao_id"]
+            isOneToOne: false
+            referencedRelation: "publicacoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      publicacoes: {
+        Row: {
+          autor_id: string
+          created_at: string
+          id: string
+          imagem_path: string | null
+          legenda: string
+          missao_dados: Json | null
+          missao_id: string | null
+          tipo: string
+          updated_at: string
+        }
+        Insert: {
+          autor_id: string
+          created_at?: string
+          id?: string
+          imagem_path?: string | null
+          legenda?: string
+          missao_dados?: Json | null
+          missao_id?: string | null
+          tipo?: string
+          updated_at?: string
+        }
+        Update: {
+          autor_id?: string
+          created_at?: string
+          id?: string
+          imagem_path?: string | null
+          legenda?: string
+          missao_dados?: Json | null
+          missao_id?: string | null
+          tipo?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "publicacoes_missao_id_fkey"
+            columns: ["missao_id"]
+            isOneToOne: false
+            referencedRelation: "missoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       qrcodes: {
         Row: {
           ativo: boolean
