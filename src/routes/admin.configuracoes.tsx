@@ -99,9 +99,7 @@ function Configuracoes() {
               type="number"
               min={0}
               value={form.pontosCheckin}
-              onChange={(e) =>
-                setForm({ ...form, pontosCheckin: Number(e.target.value) })
-              }
+              onChange={(e) => setForm({ ...form, pontosCheckin: Number(e.target.value) })}
             />
           </div>
           <div className="space-y-2">
@@ -110,9 +108,7 @@ function Configuracoes() {
               type="number"
               min={0}
               value={form.pontosCheckout}
-              onChange={(e) =>
-                setForm({ ...form, pontosCheckout: Number(e.target.value) })
-              }
+              onChange={(e) => setForm({ ...form, pontosCheckout: Number(e.target.value) })}
             />
           </div>
           <div className="space-y-2">
@@ -121,9 +117,7 @@ function Configuracoes() {
               type="number"
               min={0}
               value={form.minutosEntreTreinos}
-              onChange={(e) =>
-                setForm({ ...form, minutosEntreTreinos: Number(e.target.value) })
-              }
+              onChange={(e) => setForm({ ...form, minutosEntreTreinos: Number(e.target.value) })}
             />
           </div>
           <div className="space-y-2">
@@ -132,9 +126,7 @@ function Configuracoes() {
               type="number"
               min={0}
               value={form.minutosMinimosTreino}
-              onChange={(e) =>
-                setForm({ ...form, minutosMinimosTreino: Number(e.target.value) })
-              }
+              onChange={(e) => setForm({ ...form, minutosMinimosTreino: Number(e.target.value) })}
             />
             <p className="text-[11px] text-muted-foreground">
               O aluno só recebe os pontos do dia se ficar pelo menos esse tempo entre a entrada e a
@@ -244,7 +236,10 @@ function Configuracoes() {
 
         <div className="space-y-2 pt-2">
           {avisos.map((a) => (
-            <div key={a.id} className="flex items-center justify-between rounded-xl bg-muted/40 p-3">
+            <div
+              key={a.id}
+              className="flex items-center justify-between rounded-xl bg-muted/40 p-3"
+            >
               <div>
                 <p className="text-sm font-semibold">{a.titulo}</p>
                 <p className="text-xs text-muted-foreground">{a.texto}</p>
@@ -268,11 +263,7 @@ function Configuracoes() {
         <h2 className="text-sm font-bold">Senha do administrador</h2>
         <div className="space-y-2">
           <Label>Nova senha</Label>
-          <Input
-            type="password"
-            value={novaSenha}
-            onChange={(e) => setNovaSenha(e.target.value)}
-          />
+          <Input type="password" value={novaSenha} onChange={(e) => setNovaSenha(e.target.value)} />
         </div>
         <Button
           variant="secondary"

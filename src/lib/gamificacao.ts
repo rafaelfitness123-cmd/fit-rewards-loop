@@ -416,7 +416,6 @@ export function registrarScan(clienteId: string, codigo: string): ScanResultado 
   };
 }
 
-
 export const diaNome = (d: number) =>
   ["domingo", "segunda", "terça", "quarta", "quinta", "sexta", "sábado"][d];
 

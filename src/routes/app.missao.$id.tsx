@@ -385,4 +385,3 @@ function RastreadorGps({
     </section>
   );
 }
-

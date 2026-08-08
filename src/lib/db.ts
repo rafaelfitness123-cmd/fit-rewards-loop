@@ -123,19 +123,9 @@ export type Aviso = {
 };
 
 export type Sessao =
-  | { tipo: "admin"; usuario: string }
-  | { tipo: "cliente"; clienteId: string }
-  | null;
+  { tipo: "admin"; usuario: string } | { tipo: "cliente"; clienteId: string } | null;
 
-export const DIAS = [
-  "Domingo",
-  "Segunda",
-  "Terça",
-  "Quarta",
-  "Quinta",
-  "Sexta",
-  "Sábado",
-];
+export const DIAS = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
 
 export const DEFAULT_CONFIG_DIAS: ConfigDias = {
   "0": 70,
@@ -403,9 +393,7 @@ export async function carregarTudo() {
 function diff<T extends { id: string }>(prev: T[], next: T[]) {
   const antes = new Map(prev.map((i) => [i.id, i]));
   const depois = new Map(next.map((i) => [i.id, i]));
-  const upserts = next.filter(
-    (i) => JSON.stringify(antes.get(i.id)) !== JSON.stringify(i),
-  );
+  const upserts = next.filter((i) => JSON.stringify(antes.get(i.id)) !== JSON.stringify(i));
   const removidos = prev.filter((i) => !depois.has(i.id)).map((i) => i.id);
   return { upserts, removidos };
 }
@@ -417,10 +405,8 @@ function sincronizar<T extends { id: string }>(
   toRow: (i: T) => Row,
 ) {
   const { upserts, removidos } = diff(prev, next);
-  if (upserts.length)
-    void db.from(tabela).upsert(upserts.map(toRow)).then(erro(tabela));
-  if (removidos.length)
-    void db.from(tabela).delete().in("id", removidos).then(erro(tabela));
+  if (upserts.length) void db.from(tabela).upsert(upserts.map(toRow)).then(erro(tabela));
+  if (removidos.length) void db.from(tabela).delete().in("id", removidos).then(erro(tabela));
 }
 
 // ---------------- getters / setters ----------------
