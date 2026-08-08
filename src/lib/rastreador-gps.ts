@@ -97,7 +97,7 @@ export function validarDeslocamento(
   // Limiar adaptativo: parte da precisão do sinal, e afrouxa quando há
   // evidência independente de movimento (velocidade do GPS ou sequência
   // recente de deslocamentos aceitos). Nunca é um "sempre ignore < 10 m".
-  let limiar = Math.max(3, ponto.accuracy * 0.55);
+  let limiar = Math.min(25, Math.max(3, ponto.accuracy * 0.55));
   if (andando) limiar = Math.max(1.5, ponto.accuracy * 0.25);
   if (streakMovimento >= 2) limiar = Math.min(limiar, Math.max(1.5, ponto.accuracy * 0.3));
   // Se o intervalo entre fixes foi grande, um deslocamento maior é esperado.
