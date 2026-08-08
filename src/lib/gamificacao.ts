@@ -298,88 +298,121 @@ export function validarQR(entrada: string) {
   return { valido: true, motivo: "" };
 }
 
+/** Minutos que faltam para a meia-noite (liberação do próximo scan). */
+function faltaParaMeiaNoite(agora = new Date()) {
+  const amanha = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate() + 1);
+  return Math.max(1, Math.round((amanha.getTime() - agora.getTime()) / 60000));
+}
+
 export function registrarScan(clienteId: string, codigo: string): ScanResultado {
   const check = validarQR(codigo);
   if (!check.valido) return { ok: false, tipo: "erro", mensagem: check.motivo };
 
   const config = getConfig();
-  const treinos = getTreinos();
-  const aberto = treinos.find((t) => t.clienteId === clienteId && !t.saida);
+  const treinos = [...getTreinos()];
   const agora = new Date();
+  const hoje = diaKey(agora);
+
+  // Treino já finalizado hoje → bloqueado até a meia-noite.
+  const finalizadoHoje = treinos.find(
+    (t) => t.clienteId === clienteId && diaKey(new Date(t.entrada)) === hoje && t.saida,
+  );
+  if (finalizadoHoje) {
+    return {
+      ok: false,
+      tipo: "erro",
+      mensagem: `Você já fez entrada e saída hoje. Novo check-in liberado só à meia-noite (em ${formatarDuracao(faltaParaMeiaNoite(agora))}).`,
+    };
+  }
+
+  const aberto = treinos.find((t) => t.clienteId === clienteId && !t.saida);
+
+  // Treino aberto de outro dia: encerra sem pontos e segue como nova entrada.
+  if (aberto && diaKey(new Date(aberto.entrada)) !== hoje) {
+    const i = treinos.findIndex((t) => t.id === aberto.id);
+    treinos[i] = { ...aberto, saida: aberto.entrada, pontosSaida: 0 };
+    setTreinos([...treinos]);
+    return registrarScan(clienteId, codigo);
+  }
 
   if (aberto) {
-    // evita que o mesmo scan conte como entrada e saída
-    const desdeEntrada = (agora.getTime() - new Date(aberto.entrada).getTime()) / 60000;
-    if (desdeEntrada < 1) {
+    const minutos = Math.max(
+      0,
+      Math.round((agora.getTime() - new Date(aberto.entrada).getTime()) / 60000),
+    );
+    const minimo = Math.max(0, config.minutosMinimosTreino ?? 0);
+    if (minutos < minimo) {
+      const faltam = minimo - minutos;
       return {
         ok: false,
         tipo: "erro",
-        mensagem: "Entrada acabou de ser registrada. Escaneie novamente ao sair.",
+        mensagem: `Treino em andamento (${formatarDuracao(minutos)}). Faltam ${formatarDuracao(faltam)} para liberar a saída com pontos.`,
       };
     }
-    // check-out
+
+    // check-out válido → concede todos os pontos do dia de uma vez
+    const pontosDia = getConfigDias()[String(new Date(aberto.entrada).getDay())] ?? 0;
+    const pontosCheckin = config.pontosCheckin ?? 0;
+    const pontosCheckout = config.usarCheckout ? (config.pontosCheckout ?? 0) : 0;
+    const total = pontosDia + pontosCheckin + pontosCheckout;
+
     const idx = treinos.findIndex((t) => t.id === aberto.id);
-    let pontosSaida = 0;
-    if (config.usarCheckout && config.pontosCheckout > 0) pontosSaida = config.pontosCheckout;
-    treinos[idx] = { ...aberto, saida: agora.toISOString(), pontosSaida };
+    treinos[idx] = {
+      ...aberto,
+      saida: agora.toISOString(),
+      pontosConcedidos: true,
+      pontosEntrada: pontosDia + pontosCheckin,
+      pontosSaida: pontosCheckout,
+    };
     setTreinos([...treinos]);
-    if (pontosSaida) addPontos(clienteId, pontosSaida, "Check-out");
-    const detalhes = avaliarMissoes(clienteId);
-    const min = duracaoMinutos(treinos[idx]);
+
+    if (total > 0) {
+      addPontos(clienteId, total, `Treino de ${diaNome(new Date(aberto.entrada).getDay())}`);
+    }
+
+    const detalhes: string[] = [];
+    const streak = sequenciaAtual(clienteId);
+    const bonus = config.bonusSequencia
+      .filter((b) => b.dias === streak && b.pontos > 0)
+      .sort((a, b) => b.pontos - a.pontos)[0];
+    if (bonus) {
+      addPontos(clienteId, bonus.pontos, `Bônus de sequência (${bonus.dias} dias)`);
+      detalhes.push(`Bônus de ${bonus.dias} dias seguidos (+${bonus.pontos} pts)`);
+    }
+    detalhes.push(...avaliarMissoes(clienteId));
+
     return {
       ok: true,
       tipo: "saida",
-      mensagem: `Saída registrada. Permanência: ${formatarDuracao(min)}`,
-      pontos: pontosSaida,
+      mensagem: `Saída registrada! Permanência: ${formatarDuracao(minutos)} — +${total} pontos`,
+      pontos: total,
       detalhes,
     };
   }
 
-  // regra: apenas 2 leituras por dia (entrada + saída)
-  const hoje = diaKey(agora);
-  const treinoDeHoje = treinos.find(
-    (t) => t.clienteId === clienteId && diaKey(new Date(t.entrada)) === hoje && t.saida,
-  );
-  if (treinoDeHoje) {
-    return {
-      ok: false,
-      tipo: "erro",
-      mensagem: "Você já registrou entrada e saída hoje. Volte amanhã 💪",
-    };
-  }
-
-  const pontosDia = getConfigDias()[String(agora.getDay())] ?? 0;
-  const pontosEntrada = pontosDia + (config.pontosCheckin ?? 0);
+  // check-in: apenas inicia o treino, sem pontos
   const novo: Treino = {
     id: uid(),
     clienteId,
     entrada: agora.toISOString(),
     saida: null,
-    pontosConcedidos: true,
-    pontosEntrada,
+    pontosConcedidos: false,
+    pontosEntrada: 0,
     pontosSaida: 0,
   };
   setTreinos([novo, ...treinos]);
-  if (pontosEntrada) addPontos(clienteId, pontosEntrada, `Treino de ${diaNome(agora.getDay())}`);
 
-  const detalhes: string[] = [];
-  // bônus de sequência (uma vez por dia/streak alcançado)
-  const streak = sequenciaAtual(clienteId);
-  const bonus = config.bonusSequencia
-    .filter((b) => b.dias === streak && b.pontos > 0)
-    .sort((a, b) => b.pontos - a.pontos)[0];
-  if (bonus) {
-    addPontos(clienteId, bonus.pontos, `Bônus de sequência (${bonus.dias} dias)`);
-    detalhes.push(`Bônus de ${bonus.dias} dias seguidos (+${bonus.pontos} pts)`);
-  }
-  detalhes.push(...avaliarMissoes(clienteId));
-
+  const minimo = Math.max(0, config.minutosMinimosTreino ?? 0);
   return {
     ok: true,
     tipo: "entrada",
-    mensagem: `Entrada registrada! +${pontosEntrada} pontos`,
-    pontos: pontosEntrada,
-    detalhes,
+    mensagem: "Entrada registrada! Bom treino 💪",
+    pontos: 0,
+    detalhes: [
+      minimo > 0
+        ? `Fique pelo menos ${formatarDuracao(minimo)} e escaneie de novo na saída para receber os pontos do dia.`
+        : "Escaneie de novo na saída para receber os pontos do dia.",
+    ],
   };
 }
 
