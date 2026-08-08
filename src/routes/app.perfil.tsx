@@ -1,7 +1,12 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { CalendarDays, Flame, LogOut, Star, Timer, Trophy } from "lucide-react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useCallback, useEffect, useState } from "react";
+import { CalendarDays, Flame, LogOut, Plus, Star, Timer, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import FotoPublicacao from "@/components/FotoPublicacao";
+import PublicacaoCard from "@/components/PublicacaoCard";
+import { listarDoAluno, PAGINA, type Publicacao } from "@/lib/comunidade";
+
 import { getClientes, getMissoes, getResgates, getSessao } from "@/lib/db";
 import { logout, useClienteAtual, useStore } from "@/lib/session";
 import {
@@ -103,8 +108,11 @@ function Perfil() {
         ))}
       </section>
 
-      <Tabs defaultValue="treinos">
+      <Tabs defaultValue="publicacoes">
         <TabsList className="w-full">
+          <TabsTrigger value="publicacoes" className="flex-1 text-xs">
+            Publicações
+          </TabsTrigger>
           <TabsTrigger value="treinos" className="flex-1 text-xs">
             Treinos
           </TabsTrigger>
@@ -118,6 +126,16 @@ function Perfil() {
             Resgates
           </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="publicacoes" className="space-y-3 pt-4">
+          <Button asChild variant="secondary" className="w-full font-bold">
+            <Link to="/app/comunidade/novo">
+              <Plus className="mr-2 size-4" /> Criar publicação
+            </Link>
+          </Button>
+          <MinhasPublicacoes meuId={cliente.id} nome={cliente.nome} />
+        </TabsContent>
+
 
         <TabsContent value="treinos" className="space-y-2 pt-4">
           {dados.treinos.length === 0 && (
@@ -209,6 +227,87 @@ function Perfil() {
       >
         <LogOut className="mr-2 size-4" /> Sair da conta
       </Button>
+    </div>
+  );
+}
+
+/** Publicações do próprio aluno — grade de fotos + posts de texto. */
+function MinhasPublicacoes({ meuId, nome }: { meuId: string; nome: string }) {
+  const [posts, setPosts] = useState<Publicacao[]>([]);
+  const [pagina, setPagina] = useState(0);
+  const [temMais, setTemMais] = useState(true);
+  const [carregando, setCarregando] = useState(false);
+  const autores = new Map([[meuId, { id: meuId, nome }]]);
+
+  const carregar = useCallback(
+    async (p: number) => {
+      setCarregando(true);
+      try {
+        const lote = await listarDoAluno(meuId, p, meuId);
+        setPosts((atuais) => (p === 0 ? lote : [...atuais, ...lote]));
+        setTemMais(lote.length === PAGINA);
+        setPagina(p);
+      } finally {
+        setCarregando(false);
+      }
+    },
+    [meuId],
+  );
+
+  useEffect(() => {
+    void carregar(0);
+  }, [carregar]);
+
+  const comFoto = posts.filter((p) => p.imagemPath);
+
+  return (
+    <div className="space-y-3">
+      {comFoto.length > 0 && (
+        <div className="grid grid-cols-3 gap-1">
+          {comFoto.map((p) => (
+            <Link
+              key={p.id}
+              to="/app/comunidade/$id"
+              params={{ id: p.id }}
+              className="aspect-square overflow-hidden rounded-md"
+            >
+              <FotoPublicacao
+                path={p.imagemPath as string}
+                alt="Minha publicação"
+                className="size-full object-cover"
+              />
+            </Link>
+          ))}
+        </div>
+      )}
+
+      {posts
+        .filter((p) => !p.imagemPath)
+        .map((p) => (
+          <PublicacaoCard
+            key={p.id}
+            post={p}
+            autor={{ id: meuId, nome }}
+            autores={autores}
+            meuId={meuId}
+            souAdmin={false}
+            onRemovido={(id) => setPosts((l) => l.filter((x) => x.id !== id))}
+          />
+        ))}
+
+      {posts.length === 0 && !carregando && (
+        <p className="surface p-4 text-sm text-muted-foreground">
+          Você ainda não publicou nada na comunidade.
+        </p>
+      )}
+
+      {carregando && <p className="text-center text-xs text-muted-foreground">Carregando…</p>}
+
+      {temMais && posts.length > 0 && !carregando && (
+        <Button variant="secondary" className="w-full" onClick={() => void carregar(pagina + 1)}>
+          Carregar mais
+        </Button>
+      )}
     </div>
   );
 }

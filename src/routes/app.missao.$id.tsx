@@ -1,7 +1,8 @@
-import { createFileRoute, Link, useParams } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate, useParams } from "@tanstack/react-router";
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
 import {
   ArrowLeft,
+  Camera,
   CheckCircle2,
   Crosshair,
   Footprints,
@@ -15,9 +16,14 @@ import {
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { DIAS, getMissoes } from "@/lib/db";
+import { DIAS, getMissoes, type Missao } from "@/lib/db";
 import { useClienteAtual, useStore } from "@/lib/session";
 import { rastreador, type EstadoRastreio } from "@/lib/rastreador-gps";
+import {
+  guardarRascunhoMissao,
+  legendaSugerida,
+  type MissaoSnapshot,
+} from "@/lib/comunidade";
 import {
   aceitarMissao,
   corridasDe,
@@ -27,6 +33,18 @@ import {
   progressoDaMissao,
   registrarCorrida,
 } from "@/lib/gamificacao";
+
+/** Deduz o tipo de atividade da missão (para o card do post). */
+function atividadeDaMissao(m: Missao): string {
+  const nome = `${m.nome} ${m.descricao}`.toLowerCase();
+  if (/(bike|bicicleta|pedal|ciclis)/.test(nome)) return "bicicleta";
+  if (/(caminh|passeio|walk)/.test(nome)) return "caminhada";
+  if (/(corrid|correr|run)/.test(nome)) return "corrida";
+  if (m.objetivo === "distancia") return "corrida";
+  if (m.objetivo === "dia_semana") return "frequencia";
+  return "treino";
+}
+
 
 export const Route = createFileRoute("/app/missao/$id")({
   head: () => ({
@@ -65,6 +83,7 @@ const fmtTempo = (s: number) =>
 
 function DetalheMissao() {
   const { id: missaoId } = useParams({ from: "/app/missao/$id" });
+  const navigate = useNavigate();
   const cliente = useClienteAtual();
   const clienteId = cliente?.id;
 
@@ -79,6 +98,24 @@ function DetalheMissao() {
         .slice(0, 10),
     };
   });
+
+  // Último percurso finalizado nesta sessão (mantém o traçado GPS para o post).
+  const [ultimo, setUltimo] = useState<
+    { metros: number; duracaoS: number; trilha: { lat: number; lng: number }[] } | null
+  >(null);
+
+  const compartilhar = useCallback(
+    (snapshot: MissaoSnapshot, idMissao: string | null) => {
+      guardarRascunhoMissao({
+        missaoId: idMissao,
+        missao: snapshot,
+        legenda: legendaSugerida(snapshot),
+      });
+      void navigate({ to: "/app/comunidade/novo" });
+    },
+    [navigate],
+  );
+
 
   if (!cliente) return null;
 
@@ -174,7 +211,8 @@ function DetalheMissao() {
                 clienteId={clienteId}
                 missaoId={m.id}
                 metaM={Math.max(1, m.quantidade - progresso)}
-                onFim={(nomes) => {
+                onFim={(nomes, final) => {
+                  setUltimo(final);
                   atualizar();
                   nomes.forEach((n) => toast.success(`Missão concluída: ${n}`));
                 }}
@@ -183,6 +221,52 @@ function DetalheMissao() {
           )}
         </>
       )}
+
+      {(concluida || ultimo) && (
+        <section className="surface space-y-3 p-4">
+          <p className="text-sm font-bold">Compartilhe sua conquista 🏆</p>
+          <p className="text-xs text-muted-foreground">
+            Publique no feed da Comunidade — você pode editar a legenda antes de publicar.
+          </p>
+          <Button
+            className="w-full font-bold"
+            onClick={() => {
+              const melhor =
+                ultimo ??
+                (dados.corridas[0]
+                  ? {
+                      metros: dados.corridas[0].distanciaM,
+                      duracaoS: dados.corridas[0].duracaoS,
+                      trilha: [] as { lat: number; lng: number }[],
+                    }
+                  : null);
+              const atividade = atividadeDaMissao(m);
+              const snapshot: MissaoSnapshot = {
+                nome: m.nome,
+                atividade,
+                objetivo: m.objetivo,
+                pontos: m.pontos,
+                concluidaEm: new Date().toISOString(),
+                ...(m.objetivo === "distancia" && melhor
+                  ? {
+                      distanciaM: melhor.metros,
+                      duracaoS: melhor.duracaoS,
+                      trilha: melhor.trilha.length > 1 ? melhor.trilha : undefined,
+                    }
+                  : {
+                      quantidade: progresso,
+                      meta: m.quantidade,
+                      unidade: m.objetivo === "dia_semana" ? "dias" : "treinos",
+                    }),
+              };
+              compartilhar(snapshot, m.id);
+            }}
+          >
+            <Camera className="mr-2 size-4" /> Compartilhar missão
+          </Button>
+        </section>
+      )}
+
 
       {m.objetivo === "distancia" && dados.corridas.length > 0 && (
         <section className="space-y-3">
@@ -231,7 +315,11 @@ function RastreadorGps({
   clienteId: string;
   missaoId: string;
   metaM: number;
-  onFim: (nomes: string[]) => void;
+  onFim: (
+    nomes: string[],
+    final: { metros: number; duracaoS: number; trilha: { lat: number; lng: number }[] },
+  ) => void;
+
 }) {
   const [estado, setEstado] = useState<EstadoRastreio>(() => rastreador.ler());
   const [emIframe, setEmIframe] = useState(false);
@@ -286,7 +374,12 @@ function RastreadorGps({
             ? `Meta atingida! ${fmtDistancia(final.metros)} registrados.`
             : `Percurso registrado: ${fmtDistancia(final.metros)}`,
         );
-        onFim(concluidas);
+        onFim(concluidas, {
+          metros: final.metros,
+          duracaoS: final.duracaoS,
+          trilha: final.trilha.map((pt) => ({ lat: pt.lat, lng: pt.lng })),
+        });
+
       } catch (error) {
         console.error("Falha ao salvar percurso", error);
         toast.error("Não foi possível salvar o percurso. Tente novamente.");

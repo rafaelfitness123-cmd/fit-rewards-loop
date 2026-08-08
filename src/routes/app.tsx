@@ -1,6 +1,6 @@
 import { Link, Outlet, createFileRoute, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useEffect } from "react";
-import { Home, ListChecks, QrCode, Star, Trophy, User } from "lucide-react";
+import { Home, ListChecks, QrCode, Star, Trophy, User, Users } from "lucide-react";
 import { getSessao } from "@/lib/db";
 import { iniciarDados, useCachePronto, useClienteAtual } from "@/lib/session";
 
@@ -11,10 +11,12 @@ export const Route = createFileRoute("/app")({
 const nav = [
   { to: "/app", label: "Início", icon: Home, exact: true },
   { to: "/app/missoes", label: "Missões", icon: ListChecks, exact: false },
+  { to: "/app/comunidade", label: "Comunidade", icon: Users, exact: false },
   { to: "/app/pontos", label: "Pontos", icon: Star, exact: false },
   { to: "/app/ranking", label: "Ranking", icon: Trophy, exact: false },
   { to: "/app/perfil", label: "Perfil", icon: User, exact: false },
 ] as const;
+
 
 function AppLayout() {
   const navigate = useNavigate();
@@ -54,7 +56,7 @@ function AppLayout() {
       </div>
 
       <nav className="fixed inset-x-0 bottom-0 z-10 border-t border-border bg-card/95 pb-[env(safe-area-inset-bottom)] backdrop-blur">
-        <ul className="mx-auto grid w-full max-w-lg grid-cols-5">
+        <ul className="mx-auto grid w-full max-w-lg grid-cols-6">
           {nav.map((item) => {
             const active = item.exact ? pathname === item.to : pathname.startsWith(item.to);
             return (
