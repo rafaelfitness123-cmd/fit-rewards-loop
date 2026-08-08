@@ -1,7 +1,8 @@
-import { createFileRoute, Link, useParams } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate, useParams } from "@tanstack/react-router";
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
 import {
   ArrowLeft,
+  Camera,
   CheckCircle2,
   Crosshair,
   Footprints,
@@ -15,9 +16,14 @@ import {
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { DIAS, getMissoes } from "@/lib/db";
+import { DIAS, getMissoes, type Missao } from "@/lib/db";
 import { useClienteAtual, useStore } from "@/lib/session";
 import { rastreador, type EstadoRastreio } from "@/lib/rastreador-gps";
+import {
+  guardarRascunhoMissao,
+  legendaSugerida,
+  type MissaoSnapshot,
+} from "@/lib/comunidade";
 import {
   aceitarMissao,
   corridasDe,
@@ -27,6 +33,18 @@ import {
   progressoDaMissao,
   registrarCorrida,
 } from "@/lib/gamificacao";
+
+/** Deduz o tipo de atividade da missão (para o card do post). */
+function atividadeDaMissao(m: Missao): string {
+  const nome = `${m.nome} ${m.descricao}`.toLowerCase();
+  if (/(bike|bicicleta|pedal|ciclis)/.test(nome)) return "bicicleta";
+  if (/(caminh|passeio|walk)/.test(nome)) return "caminhada";
+  if (/(corrid|correr|run)/.test(nome)) return "corrida";
+  if (m.objetivo === "distancia") return "corrida";
+  if (m.objetivo === "dia_semana") return "frequencia";
+  return "treino";
+}
+
 
 export const Route = createFileRoute("/app/missao/$id")({
   head: () => ({
