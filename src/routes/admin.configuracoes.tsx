@@ -51,6 +51,7 @@ function Configuracoes() {
       usarCheckout: form.usarCheckout,
       pontosCheckout: Math.max(0, Number(form.pontosCheckout) || 0),
       minutosEntreTreinos: Math.max(0, Number(form.minutosEntreTreinos) || 0),
+      minutosMinimosTreino: Math.max(0, Number(form.minutosMinimosTreino) || 0),
       bonusSequencia: form.bonusSequencia
         .map((b) => ({
           dias: Math.max(1, Number(b.dias) || 1),
