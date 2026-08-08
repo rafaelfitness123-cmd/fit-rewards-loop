@@ -29,6 +29,7 @@ import { Route as AppPontosRouteImport } from './routes/app.pontos'
 import { Route as AppRankingRouteImport } from './routes/app.ranking'
 import { Route as AppScanRouteImport } from './routes/app.scan'
 import { Route as AppComunidadeIndexRouteImport } from './routes/app.comunidade.index'
+import { Route as AppComunidadeNovoRouteImport } from './routes/app.comunidade.novo'
 import { Route as AppMissaoIdRouteImport } from './routes/app.missao.$id'
 
 const IndexRoute = IndexRouteImport.update({
@@ -131,6 +132,11 @@ const AppComunidadeIndexRoute = AppComunidadeIndexRouteImport.update({
   path: '/comunidade/',
   getParentRoute: () => AppRoute,
 } as any)
+const AppComunidadeNovoRoute = AppComunidadeNovoRouteImport.update({
+  id: '/comunidade/novo',
+  path: '/comunidade/novo',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppMissaoIdRoute = AppMissaoIdRouteImport.update({
   id: '/missao/$id',
   path: '/missao/$id',
@@ -157,6 +163,7 @@ export interface FileRoutesByFullPath {
   '/app/scan': typeof AppScanRoute
   '/admin/': typeof AdminIndexRoute
   '/app/': typeof AppIndexRoute
+  '/app/comunidade/novo': typeof AppComunidadeNovoRoute
   '/app/missao/$id': typeof AppMissaoIdRoute
   '/app/comunidade/': typeof AppComunidadeIndexRoute
 }
@@ -178,6 +185,7 @@ export interface FileRoutesByTo {
   '/app/scan': typeof AppScanRoute
   '/admin': typeof AdminIndexRoute
   '/app': typeof AppIndexRoute
+  '/app/comunidade/novo': typeof AppComunidadeNovoRoute
   '/app/missao/$id': typeof AppMissaoIdRoute
   '/app/comunidade': typeof AppComunidadeIndexRoute
 }
@@ -202,6 +210,7 @@ export interface FileRoutesById {
   '/app/scan': typeof AppScanRoute
   '/admin/': typeof AdminIndexRoute
   '/app/': typeof AppIndexRoute
+  '/app/comunidade/novo': typeof AppComunidadeNovoRoute
   '/app/missao/$id': typeof AppMissaoIdRoute
   '/app/comunidade/': typeof AppComunidadeIndexRoute
 }
@@ -227,6 +236,7 @@ export interface FileRouteTypes {
     | '/app/scan'
     | '/admin/'
     | '/app/'
+    | '/app/comunidade/novo'
     | '/app/missao/$id'
     | '/app/comunidade/'
   fileRoutesByTo: FileRoutesByTo
@@ -248,6 +258,7 @@ export interface FileRouteTypes {
     | '/app/scan'
     | '/admin'
     | '/app'
+    | '/app/comunidade/novo'
     | '/app/missao/$id'
     | '/app/comunidade'
   id:
@@ -271,6 +282,7 @@ export interface FileRouteTypes {
     | '/app/scan'
     | '/admin/'
     | '/app/'
+    | '/app/comunidade/novo'
     | '/app/missao/$id'
     | '/app/comunidade/'
   fileRoutesById: FileRoutesById
@@ -423,6 +435,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppComunidadeIndexRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/comunidade/novo': {
+      id: '/app/comunidade/novo'
+      path: '/comunidade/novo'
+      fullPath: '/app/comunidade/novo'
+      preLoaderRoute: typeof AppComunidadeNovoRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/missao/$id': {
       id: '/app/missao/$id'
       path: '/missao/$id'
@@ -468,6 +487,7 @@ interface AppRouteChildren {
   AppRankingRoute: typeof AppRankingRoute
   AppScanRoute: typeof AppScanRoute
   AppIndexRoute: typeof AppIndexRoute
+  AppComunidadeNovoRoute: typeof AppComunidadeNovoRoute
   AppMissaoIdRoute: typeof AppMissaoIdRoute
   AppComunidadeIndexRoute: typeof AppComunidadeIndexRoute
 }
@@ -479,6 +499,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppRankingRoute: AppRankingRoute,
   AppScanRoute: AppScanRoute,
   AppIndexRoute: AppIndexRoute,
+  AppComunidadeNovoRoute: AppComunidadeNovoRoute,
   AppMissaoIdRoute: AppMissaoIdRoute,
   AppComunidadeIndexRoute: AppComunidadeIndexRoute,
 }
