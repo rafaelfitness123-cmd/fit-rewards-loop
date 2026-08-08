@@ -126,6 +126,21 @@ function Configuracoes() {
               }
             />
           </div>
+          <div className="space-y-2">
+            <Label>Tempo mínimo de treino (min)</Label>
+            <Input
+              type="number"
+              min={0}
+              value={form.minutosMinimosTreino}
+              onChange={(e) =>
+                setForm({ ...form, minutosMinimosTreino: Number(e.target.value) })
+              }
+            />
+            <p className="text-[11px] text-muted-foreground">
+              O aluno só recebe os pontos do dia se ficar pelo menos esse tempo entre a entrada e a
+              saída.
+            </p>
+          </div>
         </div>
         <div className="flex items-center gap-3">
           <Switch
