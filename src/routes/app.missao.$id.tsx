@@ -1,12 +1,12 @@
 import { createFileRoute, Link, useParams } from "@tanstack/react-router";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
 import {
   ArrowLeft,
   CheckCircle2,
   Crosshair,
   Footprints,
-  LocateFixed,
   MapPin,
+  Pause,
   Play,
   ShieldCheck,
   Square,
@@ -17,10 +17,10 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { DIAS, getMissoes } from "@/lib/db";
 import { useClienteAtual, useStore } from "@/lib/session";
+import { rastreador, type EstadoRastreio } from "@/lib/rastreador-gps";
 import {
   aceitarMissao,
   corridasDe,
-  distanciaEntre,
   fmtDataHora,
   fmtDistancia,
   missaoVigente,
