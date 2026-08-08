@@ -50,10 +50,18 @@ const iniciais = (nome: string) =>
     .join("")
     .toUpperCase();
 
-function Avatar({ autor, nome, size = 10 }: { autor?: AutorInfo | null; nome: string; size?: number }) {
+function Avatar({
+  autor,
+  nome,
+  size = 10,
+}: {
+  autor?: AutorInfo | null;
+  nome: string;
+  size?: 9 | 10;
+}) {
   return (
     <span
-      className={`flex size-${size} shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-primary text-xs font-black text-primary-foreground`}
+      className={`flex ${size === 9 ? "size-9" : "size-10"} shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-primary text-xs font-black text-primary-foreground`}
     >
       {autor?.avatar ? (
         <img src={autor.avatar} alt={`Avatar de ${nome}`} className="size-full object-cover" />
