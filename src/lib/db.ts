@@ -157,6 +157,7 @@ export const DEFAULT_CONFIG: ConfigGamificacao = {
     { dias: 7, pontos: 100 },
   ],
   minutosEntreTreinos: 60,
+  minutosMinimosTreino: 30,
 };
 
 export const uid = () =>
