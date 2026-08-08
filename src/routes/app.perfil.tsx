@@ -230,3 +230,84 @@ function Perfil() {
     </div>
   );
 }
+
+/** Publicações do próprio aluno — grade de fotos + posts de texto. */
+function MinhasPublicacoes({ meuId, nome }: { meuId: string; nome: string }) {
+  const [posts, setPosts] = useState<Publicacao[]>([]);
+  const [pagina, setPagina] = useState(0);
+  const [temMais, setTemMais] = useState(true);
+  const [carregando, setCarregando] = useState(false);
+  const autores = new Map([[meuId, { id: meuId, nome }]]);
+
+  const carregar = useCallback(
+    async (p: number) => {
+      setCarregando(true);
+      try {
+        const lote = await listarDoAluno(meuId, p, meuId);
+        setPosts((atuais) => (p === 0 ? lote : [...atuais, ...lote]));
+        setTemMais(lote.length === PAGINA);
+        setPagina(p);
+      } finally {
+        setCarregando(false);
+      }
+    },
+    [meuId],
+  );
+
+  useEffect(() => {
+    void carregar(0);
+  }, [carregar]);
+
+  const comFoto = posts.filter((p) => p.imagemPath);
+
+  return (
+    <div className="space-y-3">
+      {comFoto.length > 0 && (
+        <div className="grid grid-cols-3 gap-1">
+          {comFoto.map((p) => (
+            <Link
+              key={p.id}
+              to="/app/comunidade/$id"
+              params={{ id: p.id }}
+              className="aspect-square overflow-hidden rounded-md"
+            >
+              <FotoPublicacao
+                path={p.imagemPath as string}
+                alt="Minha publicação"
+                className="size-full object-cover"
+              />
+            </Link>
+          ))}
+        </div>
+      )}
+
+      {posts
+        .filter((p) => !p.imagemPath)
+        .map((p) => (
+          <PublicacaoCard
+            key={p.id}
+            post={p}
+            autor={{ id: meuId, nome }}
+            autores={autores}
+            meuId={meuId}
+            souAdmin={false}
+            onRemovido={(id) => setPosts((l) => l.filter((x) => x.id !== id))}
+          />
+        ))}
+
+      {posts.length === 0 && !carregando && (
+        <p className="surface p-4 text-sm text-muted-foreground">
+          Você ainda não publicou nada na comunidade.
+        </p>
+      )}
+
+      {carregando && <p className="text-center text-xs text-muted-foreground">Carregando…</p>}
+
+      {temMais && posts.length > 0 && !carregando && (
+        <Button variant="secondary" className="w-full" onClick={() => void carregar(pagina + 1)}>
+          Carregar mais
+        </Button>
+      )}
+    </div>
+  );
+}
