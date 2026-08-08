@@ -28,6 +28,7 @@ import { Route as AppPerfilRouteImport } from './routes/app.perfil'
 import { Route as AppPontosRouteImport } from './routes/app.pontos'
 import { Route as AppRankingRouteImport } from './routes/app.ranking'
 import { Route as AppScanRouteImport } from './routes/app.scan'
+import { Route as AppComunidadeIndexRouteImport } from './routes/app.comunidade.index'
 import { Route as AppMissaoIdRouteImport } from './routes/app.missao.$id'
 
 const IndexRoute = IndexRouteImport.update({
@@ -125,6 +126,11 @@ const AppScanRoute = AppScanRouteImport.update({
   path: '/scan',
   getParentRoute: () => AppRoute,
 } as any)
+const AppComunidadeIndexRoute = AppComunidadeIndexRouteImport.update({
+  id: '/comunidade/',
+  path: '/comunidade/',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppMissaoIdRoute = AppMissaoIdRouteImport.update({
   id: '/missao/$id',
   path: '/missao/$id',
@@ -152,6 +158,7 @@ export interface FileRoutesByFullPath {
   '/admin/': typeof AdminIndexRoute
   '/app/': typeof AppIndexRoute
   '/app/missao/$id': typeof AppMissaoIdRoute
+  '/app/comunidade/': typeof AppComunidadeIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -172,6 +179,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminIndexRoute
   '/app': typeof AppIndexRoute
   '/app/missao/$id': typeof AppMissaoIdRoute
+  '/app/comunidade': typeof AppComunidadeIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -195,6 +203,7 @@ export interface FileRoutesById {
   '/admin/': typeof AdminIndexRoute
   '/app/': typeof AppIndexRoute
   '/app/missao/$id': typeof AppMissaoIdRoute
+  '/app/comunidade/': typeof AppComunidadeIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -219,6 +228,7 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/app/'
     | '/app/missao/$id'
+    | '/app/comunidade/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -239,6 +249,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/app'
     | '/app/missao/$id'
+    | '/app/comunidade'
   id:
     | '__root__'
     | '/'
@@ -261,6 +272,7 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/app/'
     | '/app/missao/$id'
+    | '/app/comunidade/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -404,6 +416,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppScanRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/comunidade/': {
+      id: '/app/comunidade/'
+      path: '/comunidade'
+      fullPath: '/app/comunidade/'
+      preLoaderRoute: typeof AppComunidadeIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/missao/$id': {
       id: '/app/missao/$id'
       path: '/missao/$id'
@@ -450,6 +469,7 @@ interface AppRouteChildren {
   AppScanRoute: typeof AppScanRoute
   AppIndexRoute: typeof AppIndexRoute
   AppMissaoIdRoute: typeof AppMissaoIdRoute
+  AppComunidadeIndexRoute: typeof AppComunidadeIndexRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
@@ -460,6 +480,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppScanRoute: AppScanRoute,
   AppIndexRoute: AppIndexRoute,
   AppMissaoIdRoute: AppMissaoIdRoute,
+  AppComunidadeIndexRoute: AppComunidadeIndexRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
