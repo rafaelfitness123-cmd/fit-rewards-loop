@@ -370,7 +370,12 @@ function RastreadorGps({
             ? `Meta atingida! ${fmtDistancia(final.metros)} registrados.`
             : `Percurso registrado: ${fmtDistancia(final.metros)}`,
         );
-        onFim(concluidas);
+        onFim(concluidas, {
+          metros: final.metros,
+          duracaoS: final.duracaoS,
+          trilha: final.trilha.map((pt) => ({ lat: pt.lat, lng: pt.lng })),
+        });
+
       } catch (error) {
         console.error("Falha ao salvar percurso", error);
         toast.error("Não foi possível salvar o percurso. Tente novamente.");
