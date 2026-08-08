@@ -250,7 +250,12 @@ function RastreadorGps({
     if (salvo && rastreador.ler().status === "parado") setRecuperavel(salvo);
   }, [missaoId]);
 
-  useEffect(() => rastreador.assinar(setEstado), []);
+  useEffect(() => {
+    const cancelar = rastreador.assinar(setEstado);
+    return () => {
+      cancelar();
+    };
+  }, []);
 
   useEffect(() => {
     const aoFoco = () => rastreador.aoVoltarAoFoco();
