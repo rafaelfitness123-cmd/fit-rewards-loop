@@ -280,11 +280,23 @@ class Rastreador {
 
   private ligarWatch() {
     if (this.watchId !== null) return;
+    // Primeiro fix imediato: o Chrome costuma demorar muito para o primeiro
+    // callback do watchPosition de alta precisão, o que fazia o contador
+    // parecer "travado" no início. Este pedido único ancora o percurso já.
+    try {
+      navigator.geolocation.getCurrentPosition(this.processar, () => {}, {
+        enableHighAccuracy: false,
+        maximumAge: 0,
+        timeout: 8000,
+      });
+    } catch {
+      /* ignora */
+    }
     this.watchId = navigator.geolocation.watchPosition(this.processar, this.erroGeo, {
       enableHighAccuracy: true,
-      // ~1 fix/s do sistema é suficiente para caminhada/corrida e evita
-      // consumo desnecessário de bateria.
-      maximumAge: 1000,
+      // Sempre um fix novo (o cache do Chrome congelava a posição) e
+      // ~1 fix/s do sistema já basta para caminhada/corrida.
+      maximumAge: 0,
       timeout: 30000,
     });
   }
