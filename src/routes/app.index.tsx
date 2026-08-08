@@ -1,5 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Flame, Megaphone, Star, Timer, Trophy } from "lucide-react";
+import { useState } from "react";
+import { Flame, LocateFixed, MapPin, Megaphone, Star, Timer, Trophy } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { getAvisos, getClientes, getMissoes, getSessao } from "@/lib/db";
@@ -56,6 +58,7 @@ function Inicio() {
         .filter((x) => !x.p.concedida)
         .slice(0, 3),
       avisos: getAvisos().slice(0, 3),
+      temMissaoGps: getMissoes().some((m) => m.objetivo === "distancia" && missaoVigente(m)),
     };
   });
 
@@ -113,6 +116,8 @@ function Inicio() {
           <Link to="/app/scan">Escanear QR Code da academia</Link>
         </Button>
       </section>
+
+      {dados.temMissaoGps && <AtivacaoLocalizacao />}
 
       <section className="surface p-4">
         <h2 className="flex items-center gap-2 text-sm font-bold">
@@ -190,5 +195,56 @@ function Inicio() {
         </section>
       )}
     </div>
+  );
+}
+
+function AtivacaoLocalizacao() {
+  const [estado, setEstado] = useState<"pronto" | "solicitando" | "ativo" | "negado">("pronto");
+
+  const ativar = () => {
+    if (typeof navigator === "undefined" || !navigator.geolocation) {
+      toast.error("Este navegador não oferece suporte à localização.");
+      return;
+    }
+    setEstado("solicitando");
+    navigator.geolocation.getCurrentPosition(
+      () => {
+        setEstado("ativo");
+        toast.success("Localização ativada para as missões de corrida.");
+      },
+      (error) => {
+        setEstado("negado");
+        toast.error(
+          error.code === 1
+            ? "Localização bloqueada. Libere a permissão deste site no navegador."
+            : "Não foi possível obter sua localização. Tente em um local aberto.",
+        );
+      },
+      { enableHighAccuracy: true, timeout: 30000, maximumAge: 5000 },
+    );
+  };
+
+  return (
+    <section className="surface flex items-center gap-3 p-4">
+      <div className="flex size-10 shrink-0 items-center justify-center rounded-md bg-primary/15 text-primary">
+        <MapPin className="size-5" />
+      </div>
+      <div className="min-w-0 flex-1">
+        <h2 className="text-sm font-bold">GPS para missões de corrida</h2>
+        <p className="mt-0.5 text-xs text-muted-foreground">
+          {estado === "ativo"
+            ? "Localização pronta. Abra uma missão de distância para começar."
+            : estado === "negado"
+              ? "Permissão bloqueada. Libere a localização nas configurações do navegador."
+              : "Ative a localização precisa antes de iniciar um percurso."}
+        </p>
+      </div>
+      {estado !== "ativo" && (
+        <Button size="sm" onClick={ativar} disabled={estado === "solicitando"}>
+          <LocateFixed className={estado === "solicitando" ? "animate-pulse" : ""} />
+          {estado === "solicitando" ? "Ativando" : "Ativar"}
+        </Button>
+      )}
+    </section>
   );
 }
