@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   cache,
@@ -30,14 +30,15 @@ export async function recarregar() {
 
 /** Re-executa `selector` sempre que o cache do app muda. */
 export function useStore<T>(selector: () => T): [T, () => void] {
+  const selectorRef = useRef(selector);
+  selectorRef.current = selector;
   const [value, setValue] = useState<T>(() => selector());
-  const refresh = useCallback(() => setValue(selector()), [selector]);
+  const refresh = useCallback(() => setValue(selectorRef.current()), []);
 
   useEffect(() => {
     iniciarDados();
-    setValue(selector());
-    return inscrever(() => setValue(selector()));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    setValue(selectorRef.current());
+    return inscrever(() => setValue(selectorRef.current()));
   }, []);
 
   return [value, refresh];
