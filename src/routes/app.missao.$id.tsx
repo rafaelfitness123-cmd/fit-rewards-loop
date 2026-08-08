@@ -220,6 +220,8 @@ function Voltar() {
   );
 }
 
+const MapaLeaflet = lazy(() => import("@/components/MapaLeaflet"));
+
 function RastreadorGps({
   clienteId,
   missaoId,
@@ -231,316 +233,226 @@ function RastreadorGps({
   metaM: number;
   onFim: (nomes: string[]) => void;
 }) {
-  const [ativo, setAtivo] = useState(false);
-  const [solicitando, setSolicitando] = useState(false);
-  const [metros, setMetros] = useState(0);
-  const [segundos, setSegundos] = useState(0);
-  const [erro, setErro] = useState<string | null>(null);
+  const [estado, setEstado] = useState<EstadoRastreio>(() => rastreador.ler());
   const [emIframe, setEmIframe] = useState(false);
-  const [permissao, setPermissao] = useState<PermissionState | "indisponivel">("prompt");
-  const [pontos, setPontos] = useState<Array<{ lat: number; lng: number; accuracy: number }>>([]);
-  const watchRef = useRef<number | null>(null);
-  const ultimoRef = useRef<{ lat: number; lng: number } | null>(null);
-  const metrosRef = useRef(0);
-  const segundosRef = useRef(0);
+  const [recuperavel, setRecuperavel] = useState<EstadoRastreio | null>(null);
+  const [montado, setMontado] = useState(false);
   const finalizandoRef = useRef(false);
 
   useEffect(() => {
+    setMontado(true);
     try {
       setEmIframe(window.self !== window.top);
     } catch {
       setEmIframe(true);
     }
-  }, []);
+    const salvo = rastreador.recuperar(missaoId);
+    if (salvo && rastreador.ler().status === "parado") setRecuperavel(salvo);
+  }, [missaoId]);
+
+  useEffect(() => rastreador.assinar(setEstado), []);
 
   useEffect(() => {
-    let mounted = true;
-    if (typeof navigator === "undefined" || !("permissions" in navigator)) {
-      setPermissao("indisponivel");
-      return;
-    }
-    void navigator.permissions
-      .query({ name: "geolocation" })
-      .then((status) => {
-        if (!mounted) return;
-        setPermissao(status.state);
-        status.onchange = () => setPermissao(status.state);
-      })
-      .catch(() => setPermissao("indisponivel"));
-    return () => {
-      mounted = false;
-    };
+    const aoFoco = () => rastreador.aoVoltarAoFoco();
+    document.addEventListener("visibilitychange", aoFoco);
+    return () => document.removeEventListener("visibilitychange", aoFoco);
   }, []);
 
-  const limpar = useCallback(() => {
-    try {
-      if (watchRef.current !== null && typeof navigator !== "undefined" && navigator.geolocation) {
-        navigator.geolocation.clearWatch(watchRef.current);
-      }
-    } catch {
-      /* ignora */
-    }
-    watchRef.current = null;
-  }, []);
-
-  useEffect(() => {
-    if (!ativo) return;
-    const t = setInterval(() => setSegundos((s) => s + 1), 1000);
-    return () => clearInterval(t);
-  }, [ativo]);
-
-  useEffect(() => limpar, [limpar]);
-
-  const mensagemErroGeo = (code?: number) => {
-    if (code === 1)
-      return emIframe
-        ? "O navegador bloqueou o GPS dentro do preview. Abra o app em uma aba separada e autorize a localização."
-        : "Permissão de localização negada. Autorize o GPS nas configurações do navegador e tente novamente.";
-    if (code === 2) return "Sinal de GPS indisponível. Vá para um local aberto e tente novamente.";
-    if (code === 3) return "O GPS demorou para responder. Tente novamente.";
-    return "Não foi possível acessar sua localização. Autorize o GPS e tente de novo.";
-  };
+  const ativo = estado.status === "ativo";
+  const pausado = estado.status === "pausado";
+  const rodando = ativo || pausado;
 
   const concluirPercurso = useCallback(
-    (distancia: number, duracao: number, automatico: boolean) => {
+    (automatico: boolean) => {
       if (finalizandoRef.current) return;
       finalizandoRef.current = true;
-      limpar();
-      setAtivo(false);
-      setSolicitando(false);
+      const final = rastreador.parar();
       try {
-        const concluidas = registrarCorrida(clienteId, missaoId, distancia, duracao);
+        const concluidas = registrarCorrida(
+          clienteId,
+          missaoId,
+          final.metros,
+          final.duracaoS,
+        );
+        rastreador.zerar();
+        setRecuperavel(null);
         toast.success(
           automatico
-            ? `Meta atingida! ${fmtDistancia(distancia)} registrados.`
-            : `Percurso registrado: ${fmtDistancia(distancia)}`,
+            ? `Meta atingida! ${fmtDistancia(final.metros)} registrados.`
+            : `Percurso registrado: ${fmtDistancia(final.metros)}`,
         );
         onFim(concluidas);
       } catch (error) {
         console.error("Falha ao salvar percurso", error);
+        toast.error("Não foi possível salvar o percurso. Tente novamente.");
+      } finally {
         finalizandoRef.current = false;
-        setErro("O percurso terminou, mas não foi possível salvá-lo. Tente novamente.");
       }
     },
-    [clienteId, limpar, missaoId, onFim],
+    [clienteId, missaoId, onFim],
   );
 
-  const iniciarMonitoramento = useCallback(
-    (inicial: GeolocationPosition) => {
-      const primeiro = {
-        lat: inicial.coords.latitude,
-        lng: inicial.coords.longitude,
-        accuracy: inicial.coords.accuracy,
-      };
-      ultimoRef.current = primeiro;
-      setPontos([primeiro]);
-      setPermissao("granted");
-      setSolicitando(false);
-      setAtivo(true);
-      watchRef.current = navigator.geolocation.watchPosition(
-        (pos) => {
-          const ponto = {
-            lat: pos.coords.latitude,
-            lng: pos.coords.longitude,
-            accuracy: pos.coords.accuracy,
-          };
-          const anterior = ultimoRef.current;
-          if (!anterior) {
-            ultimoRef.current = ponto;
-            setPontos([ponto]);
-            return;
-          }
-          const d = distanciaEntre(anterior, ponto);
-          const precisaoAceitavel = Number.isFinite(ponto.accuracy) && ponto.accuracy <= 45;
-          if (d >= 2 && d <= 150 && precisaoAceitavel) {
-            const total = metrosRef.current + d;
-            metrosRef.current = total;
-            ultimoRef.current = ponto;
-            setMetros(total);
-            setPontos((atuais) => [...atuais.slice(-199), ponto]);
-            if (total >= metaM) concluirPercurso(total, segundosRef.current, true);
-          }
-        },
-        (geoError) => {
-          limpar();
-          setAtivo(false);
-          setSolicitando(false);
-          setErro(mensagemErroGeo(geoError.code));
-        },
-        { enableHighAccuracy: true, maximumAge: 2000, timeout: 30000 },
-      );
-    },
-    [concluirPercurso, limpar, metaM],
-  );
+  // Conclusão automática ao bater a meta (mantém a regra atual do sistema).
+  useEffect(() => {
+    if (rodando && estado.metros >= metaM) concluirPercurso(true);
+  }, [rodando, estado.metros, metaM, concluirPercurso]);
 
-  const iniciar = () => {
-    try {
-      if (typeof navigator === "undefined" || !navigator.geolocation) {
-        setErro("Este dispositivo/navegador não suporta GPS.");
-        return;
-      }
-      if (typeof window !== "undefined" && !window.isSecureContext) {
-        setErro("O GPS só funciona em conexão segura (https).");
-        return;
-      }
-      setErro(null);
-      setSolicitando(true);
-      setMetros(0);
-      setSegundos(0);
-      setPontos([]);
-      metrosRef.current = 0;
-      segundosRef.current = 0;
-      finalizandoRef.current = false;
-      ultimoRef.current = null;
-
-      navigator.geolocation.getCurrentPosition(
-        iniciarMonitoramento,
-        (geoError) => {
-          setAtivo(false);
-          setSolicitando(false);
-          if (geoError.code === 1) setPermissao("denied");
-          setErro(mensagemErroGeo(geoError.code));
-        },
-        { enableHighAccuracy: true, timeout: 30000, maximumAge: 2000 },
-      );
-    } catch (error) {
-      console.error("Falha ao iniciar GPS", error);
-      setAtivo(false);
-      setSolicitando(false);
-      setErro("Não foi possível iniciar o GPS neste dispositivo.");
+  const iniciar = (retomando?: EstadoRastreio) => {
+    if (typeof window !== "undefined" && !window.isSecureContext) {
+      toast.error("O GPS só funciona em conexão segura (https).");
+      return;
     }
+    setRecuperavel(null);
+    rastreador.iniciar(missaoId, retomando);
   };
 
   const parar = () => {
-    if (metrosRef.current < 10) {
-      limpar();
-      setAtivo(false);
+    if (estado.metros < 10) {
+      rastreador.zerar();
       toast.error("Distância muito curta para registrar.");
-      setMetros(0);
-      setSegundos(0);
-      setPontos([]);
       return;
     }
-    concluirPercurso(metrosRef.current, segundosRef.current, false);
+    concluirPercurso(false);
   };
 
-  useEffect(() => {
-    if (!ativo) return;
-    segundosRef.current = segundos;
-  }, [ativo, segundos]);
+  const trilha = estado.trilha;
+  const atual = estado.atual ?? trilha.at(-1) ?? null;
+  const restante = Math.max(0, metaM - estado.metros);
+
+  const badge =
+    estado.qualidade === "boa"
+      ? { cor: "text-primary", texto: "GPS preciso" }
+      : estado.qualidade === "baixa"
+        ? { cor: "text-gold", texto: "Precisão baixa" }
+        : { cor: "text-destructive", texto: "GPS indisponível" };
 
   return (
     <section className="surface overflow-hidden">
-      <MapaPercurso pontos={pontos} ativo={ativo} />
-      <div className="p-5 text-center">
-      <Footprints className="mx-auto size-6 text-primary" />
-      <p className="mt-3 text-5xl font-black tabular-nums">
-        {(metros / 1000).toFixed(2)}
-        <span className="text-lg font-bold text-muted-foreground"> km</span>
-      </p>
-      <p className="mt-1 text-sm text-muted-foreground tabular-nums">
-        {fmtTempo(segundos)} em movimento
-      </p>
-      <div className="mt-3 flex items-center justify-center gap-2 text-xs text-muted-foreground">
-        <Crosshair className="size-4 text-primary" />
-        Faltam {fmtDistancia(Math.max(0, metaM - metros))}
+      {montado ? (
+        <Suspense
+          fallback={
+            <div className="flex h-56 items-center justify-center border-b border-border bg-muted/30 text-xs text-muted-foreground">
+              Carregando mapa…
+            </div>
+          }
+        >
+          <MapaLeaflet trilha={trilha} atual={atual} ativo={rodando} />
+        </Suspense>
+      ) : (
+        <div className="h-56 border-b border-border bg-muted/30" />
+      )}
+
+      <div className="flex items-center justify-between gap-2 border-b border-border px-4 py-2.5 text-xs">
+        <span className={`flex items-center gap-1.5 font-semibold ${badge.cor}`}>
+          <span className="inline-block size-2 rounded-full bg-current" />
+          {badge.texto}
+        </span>
+        <span className="text-muted-foreground tabular-nums">
+          {estado.accuracy != null && Number.isFinite(estado.accuracy)
+            ? `±${Math.round(estado.accuracy)} m`
+            : "sem sinal"}
+        </span>
       </div>
-      {!ativo && !erro && (
-        <div className="mt-4 flex items-center justify-center gap-2 rounded-md bg-primary/10 p-3 text-left text-xs text-muted-foreground">
-          <ShieldCheck className="size-5 shrink-0 text-primary" />
-          Ao iniciar, permita o uso da localização precisa. O GPS será usado apenas durante esta missão.
+
+      <div className="p-5 text-center">
+        <Footprints className="mx-auto size-6 text-primary" />
+        <p className="mt-3 text-5xl font-black tabular-nums">
+          {(estado.metros / 1000).toFixed(2)}
+          <span className="text-lg font-bold text-muted-foreground"> km</span>
+        </p>
+        <p className="mt-1 text-xs text-muted-foreground">
+          de {fmtDistancia(metaM)}
+        </p>
+        <p className="mt-2 text-sm text-muted-foreground tabular-nums">
+          {fmtTempo(estado.duracaoS)} ·{" "}
+          {pausado ? "pausado" : estado.emMovimento ? "em movimento" : "parado"}
+        </p>
+        <div className="mt-3 flex items-center justify-center gap-2 text-xs text-muted-foreground">
+          <Crosshair className="size-4 text-primary" />
+          Faltam {fmtDistancia(restante)}
         </div>
-      )}
-      {erro && (
-        <div className="mt-3 space-y-2">
-          <p className="text-xs text-destructive">{erro}</p>
-          {emIframe && (
-            <a
-              href={typeof window !== "undefined" ? window.location.href : "#"}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-block text-xs font-semibold text-primary underline"
-            >
-              Abrir em uma aba separada
-            </a>
-          )}
-        </div>
-      )}
-      <Button
-        className="mt-5 w-full font-bold"
-        variant={ativo ? "secondary" : "default"}
-        onClick={ativo ? parar : iniciar}
-        disabled={solicitando}
-      >
-        {solicitando ? (
-          <><LocateFixed className="mr-2 size-4 animate-pulse" /> Aguardando localização…</>
-        ) : ativo ? (
-          <>
-            <Square className="mr-2 size-4" /> Parar e salvar
-          </>
-        ) : (
-          <>
-            <Play className="mr-2 size-4" /> Iniciar percurso
-          </>
+
+        {!rodando && !estado.erro && (
+          <div className="mt-4 flex items-center gap-2 rounded-md bg-primary/10 p-3 text-left text-xs text-muted-foreground">
+            <ShieldCheck className="size-5 shrink-0 text-primary" />
+            Ao iniciar, permita o uso da localização precisa. Ela é usada apenas nesta
+            missão e não é compartilhada com outros alunos.
+          </div>
         )}
-      </Button>
-      <p className="mt-2 text-[11px] text-muted-foreground">
-        {permissao === "denied"
-          ? "Libere a localização para este site nas configurações do navegador."
-          : "Mantenha esta tela aberta. A missão termina automaticamente ao atingir a meta."}
-      </p>
+
+        {recuperavel && !rodando && (
+          <div className="mt-4 space-y-2 rounded-md bg-muted/50 p-3 text-left text-xs">
+            <p className="text-muted-foreground">
+              Encontramos um percurso não finalizado com{" "}
+              <strong className="text-foreground">
+                {fmtDistancia(recuperavel.metros)}
+              </strong>
+              . Deseja continuar?
+            </p>
+            <div className="flex gap-2">
+              <Button size="sm" className="flex-1" onClick={() => iniciar(recuperavel)}>
+                Continuar
+              </Button>
+              <Button
+                size="sm"
+                variant="secondary"
+                className="flex-1"
+                onClick={() => {
+                  rastreador.limparSalvo();
+                  setRecuperavel(null);
+                }}
+              >
+                Descartar
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {estado.erro && (
+          <div className="mt-3 space-y-2">
+            <p className="text-xs text-destructive">{estado.erro}</p>
+            {emIframe && (
+              <a
+                href={typeof window !== "undefined" ? window.location.href : "#"}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-block text-xs font-semibold text-primary underline"
+              >
+                Abrir em uma aba separada
+              </a>
+            )}
+          </div>
+        )}
+
+        {!rodando ? (
+          <Button className="mt-5 w-full font-bold" onClick={() => iniciar()}>
+            <Play className="mr-2 size-4" /> Iniciar percurso
+          </Button>
+        ) : (
+          <div className="mt-5 grid grid-cols-2 gap-2">
+            <Button
+              variant="secondary"
+              className="font-bold"
+              onClick={() => (pausado ? rastreador.retomar() : rastreador.pausar())}
+            >
+              {pausado ? (
+                <><Play className="mr-2 size-4" /> Continuar</>
+              ) : (
+                <><Pause className="mr-2 size-4" /> Pausar</>
+              )}
+            </Button>
+            <Button className="font-bold" onClick={parar}>
+              <Square className="mr-2 size-4" /> Parar e salvar
+            </Button>
+          </div>
+        )}
+
+        <p className="mt-2 text-[11px] text-muted-foreground">
+          O navegador pausa o GPS com a tela bloqueada. Mantenha a tela ligada — a
+          missão termina sozinha ao atingir a meta e o percurso é salvo automaticamente.
+        </p>
       </div>
     </section>
   );
 }
 
-function MapaPercurso({
-  pontos,
-  ativo,
-}: {
-  pontos: Array<{ lat: number; lng: number; accuracy: number }>;
-  ativo: boolean;
-}) {
-  const largura = 320;
-  const altura = 190;
-  if (pontos.length === 0) {
-    return (
-      <div className="flex h-48 flex-col items-center justify-center border-b border-border bg-muted/30 text-muted-foreground">
-        <MapPin className="size-8 text-primary" />
-        <p className="mt-2 text-sm font-semibold">Seu percurso aparecerá aqui</p>
-        <p className="mt-1 text-xs">Inicie para localizar sua posição.</p>
-      </div>
-    );
-  }
-
-  const lats = pontos.map((p) => p.lat);
-  const lngs = pontos.map((p) => p.lng);
-  const minLat = Math.min(...lats);
-  const maxLat = Math.max(...lats);
-  const minLng = Math.min(...lngs);
-  const maxLng = Math.max(...lngs);
-  const latSpan = Math.max(maxLat - minLat, 0.0002);
-  const lngSpan = Math.max(maxLng - minLng, 0.0002);
-  const projetar = (p: { lat: number; lng: number }) => ({
-    x: 20 + ((p.lng - minLng) / lngSpan) * (largura - 40),
-    y: 20 + ((maxLat - p.lat) / latSpan) * (altura - 40),
-  });
-  const linha = pontos.map((p) => projetar(p)).map((p) => `${p.x},${p.y}`).join(" ");
-  const ultimo = pontos.at(-1);
-  if (!ultimo) return null;
-  const atual = projetar(ultimo);
-
-  return (
-    <div className="relative h-48 border-b border-border bg-muted/30">
-      <svg viewBox={`0 0 ${largura} ${altura}`} className="h-full w-full" role="img" aria-label="Mapa do percurso atual">
-        <path d="M0 48H320M0 96H320M0 144H320M64 0V190M128 0V190M192 0V190M256 0V190" className="stroke-border" strokeWidth="1" fill="none" />
-        {pontos.length > 1 && <polyline points={linha} fill="none" className="stroke-primary" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" />}
-        <circle cx={atual.x} cy={atual.y} r="10" className="fill-primary/20" />
-        <circle cx={atual.x} cy={atual.y} r="5" className="fill-primary" />
-      </svg>
-      <span className="absolute left-3 top-3 rounded-md bg-background/90 px-2 py-1 text-[11px] font-semibold text-foreground">
-        {ativo ? "GPS ativo" : "Percurso finalizado"}
-      </span>
-    </div>
-  );
-}
