@@ -211,7 +211,8 @@ function DetalheMissao() {
                 clienteId={clienteId}
                 missaoId={m.id}
                 metaM={Math.max(1, m.quantidade - progresso)}
-                onFim={(nomes) => {
+                onFim={(nomes, final) => {
+                  setUltimo(final);
                   atualizar();
                   nomes.forEach((n) => toast.success(`Missão concluída: ${n}`));
                 }}
@@ -220,6 +221,52 @@ function DetalheMissao() {
           )}
         </>
       )}
+
+      {(concluida || ultimo) && (
+        <section className="surface space-y-3 p-4">
+          <p className="text-sm font-bold">Compartilhe sua conquista 🏆</p>
+          <p className="text-xs text-muted-foreground">
+            Publique no feed da Comunidade — você pode editar a legenda antes de publicar.
+          </p>
+          <Button
+            className="w-full font-bold"
+            onClick={() => {
+              const melhor =
+                ultimo ??
+                (dados.corridas[0]
+                  ? {
+                      metros: dados.corridas[0].distanciaM,
+                      duracaoS: dados.corridas[0].duracaoS,
+                      trilha: [] as { lat: number; lng: number }[],
+                    }
+                  : null);
+              const atividade = atividadeDaMissao(m);
+              const snapshot: MissaoSnapshot = {
+                nome: m.nome,
+                atividade,
+                objetivo: m.objetivo,
+                pontos: m.pontos,
+                concluidaEm: new Date().toISOString(),
+                ...(m.objetivo === "distancia" && melhor
+                  ? {
+                      distanciaM: melhor.metros,
+                      duracaoS: melhor.duracaoS,
+                      trilha: melhor.trilha.length > 1 ? melhor.trilha : undefined,
+                    }
+                  : {
+                      quantidade: progresso,
+                      meta: m.quantidade,
+                      unidade: m.objetivo === "dia_semana" ? "dias" : "treinos",
+                    }),
+              };
+              compartilhar(snapshot, m.id);
+            }}
+          >
+            <Camera className="mr-2 size-4" /> Compartilhar missão
+          </Button>
+        </section>
+      )}
+
 
       {m.objetivo === "distancia" && dados.corridas.length > 0 && (
         <section className="space-y-3">
