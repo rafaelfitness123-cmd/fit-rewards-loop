@@ -56,7 +56,7 @@ function AppLayout() {
       </div>
 
       <nav className="fixed inset-x-0 bottom-0 z-10 border-t border-border bg-card/95 pb-[env(safe-area-inset-bottom)] backdrop-blur">
-        <ul className="mx-auto grid w-full max-w-lg grid-cols-5">
+        <ul className="mx-auto grid w-full max-w-lg grid-cols-6">
           {nav.map((item) => {
             const active = item.exact ? pathname === item.to : pathname.startsWith(item.to);
             return (
