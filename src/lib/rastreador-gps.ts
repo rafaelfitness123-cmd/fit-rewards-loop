@@ -51,8 +51,12 @@ export function haversine(
   return 2 * R * Math.asin(Math.sqrt(s));
 }
 
-/** Precisão pior que isto é descartada (ponto claramente inválido). */
-const ACC_MAX = 60;
+/**
+ * Precisão pior que isto é descartada (ponto claramente inválido).
+ * 120 m acomoda navegadores desktop / Chrome com localização por rede,
+ * que raramente entregam < 60 m — antes disso o contador nunca iniciava.
+ */
+const ACC_MAX = 120;
 /** Velocidade máxima plausível numa missão a pé (m/s) — acima disso é salto de GPS. */
 const VEL_MAX = 9;
 
