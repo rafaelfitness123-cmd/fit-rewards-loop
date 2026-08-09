@@ -57,6 +57,8 @@ export function haversine(
  * que raramente entregam < 60 m — antes disso o contador nunca iniciava.
  */
 const ACC_MAX = 120;
+/** Precisão máxima aceita para SOMAR distância (acima disso é só posição no mapa). */
+const ACC_SOMA = 40;
 /** Velocidade máxima plausível numa missão a pé (m/s) — acima disso é salto de GPS. */
 const VEL_MAX = 9;
 
