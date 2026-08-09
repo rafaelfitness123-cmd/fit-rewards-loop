@@ -545,11 +545,32 @@ function RastreadorGps({
           </div>
         )}
 
+        {rodando && (
+          <Button
+            variant="outline"
+            className="mt-2 w-full font-bold"
+            onClick={() => setBloqueado(true)}
+          >
+            <Lock className="mr-2 size-4" /> Modo seguro (bloquear tela)
+          </Button>
+        )}
+
         <p className="mt-2 text-[11px] text-muted-foreground">
           O navegador pausa o GPS com a tela bloqueada. Mantenha a tela ligada — a
           missão termina sozinha ao atingir a meta e o percurso é salvo automaticamente.
         </p>
       </div>
+
+      {bloqueado && rodando && (
+        <BloqueioTela
+          metros={estado.metros}
+          duracaoS={estado.duracaoS}
+          statusTexto={
+            pausado ? "pausado" : estado.emMovimento ? "em movimento" : "parado"
+          }
+          onDesbloquear={() => setBloqueado(false)}
+        />
+      )}
     </section>
   );
 }
