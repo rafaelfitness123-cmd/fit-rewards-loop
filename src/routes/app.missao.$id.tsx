@@ -6,6 +6,7 @@ import {
   CheckCircle2,
   Crosshair,
   Footprints,
+  Lock,
   MapPin,
   Pause,
   Play,
@@ -305,6 +306,7 @@ function Voltar() {
 }
 
 const MapaLeaflet = lazy(() => import("@/components/MapaLeaflet"));
+const BloqueioTela = lazy(() => import("@/components/BloqueioTela"));
 
 function RastreadorGps({
   clienteId,
@@ -325,6 +327,7 @@ function RastreadorGps({
   const [emIframe, setEmIframe] = useState(false);
   const [recuperavel, setRecuperavel] = useState<EstadoRastreio | null>(null);
   const [montado, setMontado] = useState(false);
+  const [bloqueado, setBloqueado] = useState(false);
   const finalizandoRef = useRef(false);
 
   useEffect(() => {
@@ -562,6 +565,7 @@ function RastreadorGps({
       </div>
 
       {bloqueado && rodando && (
+        <Suspense fallback={null}>
         <BloqueioTela
           metros={estado.metros}
           duracaoS={estado.duracaoS}
@@ -570,6 +574,7 @@ function RastreadorGps({
           }
           onDesbloquear={() => setBloqueado(false)}
         />
+        </Suspense>
       )}
     </section>
   );
