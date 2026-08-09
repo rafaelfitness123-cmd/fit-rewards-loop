@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate, useParams } from "@tanstack/react-router";
-import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import {
   ArrowLeft,
   Camera,
@@ -308,6 +308,9 @@ function Voltar() {
 const MapaLeaflet = lazy(() => import("@/components/MapaLeaflet"));
 const BloqueioTela = lazy(() => import("@/components/BloqueioTela"));
 
+const subscreverRastreador = (fn: () => void) => rastreador.assinar(() => fn());
+const lerRastreador = () => rastreador.ler();
+
 function RastreadorGps({
   clienteId,
   missaoId,
@@ -323,7 +326,13 @@ function RastreadorGps({
   ) => void;
 
 }) {
-  const [estado, setEstado] = useState<EstadoRastreio>(() => rastreador.ler());
+  // useSyncExternalStore garante que toda emissão do rastreador re-renderize
+  // imediatamente (no Chrome os dados só apareciam ao pausar/despausar).
+  const estado = useSyncExternalStore(
+    subscreverRastreador,
+    lerRastreador,
+    lerRastreador,
+  );
   const [emIframe, setEmIframe] = useState(false);
   const [recuperavel, setRecuperavel] = useState<EstadoRastreio | null>(null);
   const [montado, setMontado] = useState(false);
@@ -341,12 +350,6 @@ function RastreadorGps({
     if (salvo && rastreador.ler().status === "parado") setRecuperavel(salvo);
   }, [missaoId]);
 
-  useEffect(() => {
-    const cancelar = rastreador.assinar(setEstado);
-    return () => {
-      cancelar();
-    };
-  }, []);
 
   useEffect(() => {
     const aoFoco = () => rastreador.aoVoltarAoFoco();
