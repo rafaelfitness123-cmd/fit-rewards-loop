@@ -323,7 +323,13 @@ function RastreadorGps({
   ) => void;
 
 }) {
-  const [estado, setEstado] = useState<EstadoRastreio>(() => rastreador.ler());
+  // useSyncExternalStore garante que toda emissão do rastreador re-renderize
+  // imediatamente (no Chrome os dados só apareciam ao pausar/despausar).
+  const estado = useSyncExternalStore(
+    subscreverRastreador,
+    lerRastreador,
+    lerRastreador,
+  );
   const [emIframe, setEmIframe] = useState(false);
   const [recuperavel, setRecuperavel] = useState<EstadoRastreio | null>(null);
   const [montado, setMontado] = useState(false);
@@ -341,12 +347,6 @@ function RastreadorGps({
     if (salvo && rastreador.ler().status === "parado") setRecuperavel(salvo);
   }, [missaoId]);
 
-  useEffect(() => {
-    const cancelar = rastreador.assinar(setEstado);
-    return () => {
-      cancelar();
-    };
-  }, []);
 
   useEffect(() => {
     const aoFoco = () => rastreador.aoVoltarAoFoco();
