@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate, useParams } from "@tanstack/react-router";
-import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import {
   ArrowLeft,
   Camera,
@@ -307,6 +307,9 @@ function Voltar() {
 
 const MapaLeaflet = lazy(() => import("@/components/MapaLeaflet"));
 const BloqueioTela = lazy(() => import("@/components/BloqueioTela"));
+
+const subscreverRastreador = (fn: () => void) => rastreador.assinar(() => fn());
+const lerRastreador = () => rastreador.ler();
 
 function RastreadorGps({
   clienteId,
