@@ -79,6 +79,11 @@ export function validarDeslocamento(
   if (!Number.isFinite(ponto.accuracy) || ponto.accuracy > ACC_MAX) {
     return { aceito: false, distancia: 0, motivo: "precisao" };
   }
+  // Precisão pior que isto serve para mostrar a posição no mapa, mas nunca
+  // para somar metros — é a principal fonte de deriva com o celular parado.
+  if (ponto.accuracy > ACC_SOMA) {
+    return { aceito: false, distancia: 0, motivo: "precisao" };
+  }
 
   const d = haversine(ancora, ponto);
   const dt = Math.max(0.2, (ponto.t - ancora.t) / 1000);
@@ -91,27 +96,32 @@ export function validarDeslocamento(
 
   const velGps = ponto.speed;
   const temVelocidade = velGps !== null && Number.isFinite(velGps);
-  const andando = temVelocidade ? (velGps as number) >= 0.6 : false;
-  const parado = temVelocidade ? (velGps as number) < 0.25 : false;
+  const andando = temVelocidade ? (velGps as number) >= 0.7 : false;
+  const parado = temVelocidade ? (velGps as number) < 0.5 : false;
 
-  // Limiar adaptativo: parte da precisão do sinal, e afrouxa quando há
-  // evidência independente de movimento (velocidade do GPS ou sequência
-  // recente de deslocamentos aceitos). Nunca é um "sempre ignore < 10 m".
-  let limiar = Math.min(25, Math.max(3, ponto.accuracy * 0.55));
-  if (andando) limiar = Math.max(1.5, ponto.accuracy * 0.25);
-  if (streakMovimento >= 2) limiar = Math.min(limiar, Math.max(1.5, ponto.accuracy * 0.3));
-  // Se o intervalo entre fixes foi grande, um deslocamento maior é esperado.
-  if (dt >= 4) limiar = Math.min(limiar, 4);
-
-  if (parado && velocidadeCalculada < 0.5) {
+  // Se o próprio GPS diz que o aparelho está parado, nada é somado.
+  if (parado) {
     return { aceito: false, distancia: 0, motivo: "parado" };
   }
+
+  // Sem evidência de velocidade, a deriva típica fica abaixo de ~0,5 m/s.
+  if (!temVelocidade && velocidadeCalculada < 0.6) {
+    return { aceito: false, distancia: 0, motivo: "parado" };
+  }
+
+  // Limiar mínimo de deslocamento: nunca menor que o raio de erro do sinal.
+  // Sem esse piso, o ruído do GPS parado somava dezenas de metros.
+  let limiar = Math.max(8, ponto.accuracy * 0.9);
+  if (andando) limiar = Math.max(6, ponto.accuracy * 0.7);
+  if (andando && streakMovimento >= 3) limiar = Math.max(5, ponto.accuracy * 0.6);
+
   if (d < limiar) {
     return { aceito: false, distancia: 0, motivo: "ruido" };
   }
 
   return { aceito: true, distancia: d };
 }
+
 
 type Ouvinte = (estado: EstadoRastreio) => void;
 
