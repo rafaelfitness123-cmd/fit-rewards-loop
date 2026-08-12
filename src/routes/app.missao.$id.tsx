@@ -7,6 +7,7 @@ import {
   Crosshair,
   Footprints,
   Lock,
+  Users,
   MapPin,
   Pause,
   Play,
@@ -21,12 +22,22 @@ import { DIAS, getMissoes, type Missao } from "@/lib/db";
 import { useClienteAtual, useStore } from "@/lib/session";
 import { rastreador, type EstadoRastreio } from "@/lib/rastreador-gps";
 import {
+  buscarParceiros,
+  getCompartilharLocal,
+  INTERVALO_PRESENCA_MS,
+  publicarPosicao,
+  RAIO_PROXIMIDADE_M,
+  sairDaPresenca,
+  type Parceiro,
+} from "@/lib/presenca";
+import {
   guardarRascunhoMissao,
   legendaSugerida,
   type MissaoSnapshot,
 } from "@/lib/comunidade";
 import {
   aceitarMissao,
+  ehGps,
   corridasDe,
   fmtDataHora,
   fmtDistancia,
@@ -136,7 +147,9 @@ function DetalheMissao() {
   const vigente = missaoVigente(m);
 
   const comoFazer =
-    m.objetivo === "distancia"
+    m.objetivo === "coletiva"
+      ? `Missão coletiva: percorra ${fmtDistancia(m.quantidade)} com o GPS ligado. Quem estiver participando e a até ${RAIO_PROXIMIDADE_M} m de você aparece no mapa em tempo real (atualiza a cada 7 s).`
+      : m.objetivo === "distancia"
       ? `Percorra ${fmtDistancia(m.quantidade)} correndo ou caminhando. Use o rastreador GPS desta tela — ele conta a distância somente para esta missão.`
       : m.objetivo === "dia_semana"
         ? `Faça check-in na academia ${m.quantidade}x em ${DIAS[m.diaSemana ?? 6]}, escaneando o QR Code da recepção.`
@@ -176,7 +189,7 @@ function DetalheMissao() {
         <p className="text-[11px] text-muted-foreground">
           {concluida
             ? "Missão concluída 🎉"
-            : m.objetivo === "distancia"
+            : ehGps(m.objetivo)
               ? `${fmtDistancia(progresso)} de ${fmtDistancia(m.quantidade)}`
               : `${progresso}/${m.quantidade} concluídos`}
         </p>
@@ -187,7 +200,7 @@ function DetalheMissao() {
         )}
       </section>
 
-      {m.objetivo === "distancia" && vigente && !concluida && (
+      {ehGps(m.objetivo) && vigente && !concluida && (
         <>
           {!p?.aceita ? (
             <section className="surface space-y-3 p-4">
@@ -211,6 +224,7 @@ function DetalheMissao() {
               <RastreadorGps
                 clienteId={clienteId}
                 missaoId={m.id}
+                coletiva={m.objetivo === "coletiva"}
                 metaM={Math.max(1, m.quantidade - progresso)}
                 onFim={(nomes, final) => {
                   setUltimo(final);
@@ -248,7 +262,7 @@ function DetalheMissao() {
                 objetivo: m.objetivo,
                 pontos: m.pontos,
                 concluidaEm: new Date().toISOString(),
-                ...(m.objetivo === "distancia" && melhor
+                ...(ehGps(m.objetivo) && melhor
                   ? {
                       distanciaM: melhor.metros,
                       duracaoS: melhor.duracaoS,
@@ -269,7 +283,7 @@ function DetalheMissao() {
       )}
 
 
-      {m.objetivo === "distancia" && dados.corridas.length > 0 && (
+      {ehGps(m.objetivo) && dados.corridas.length > 0 && (
         <section className="space-y-3">
           <h2 className="text-sm font-bold">Percursos desta missão</h2>
           {dados.corridas.map((c) => (
@@ -315,11 +329,13 @@ function RastreadorGps({
   clienteId,
   missaoId,
   metaM,
+  coletiva,
   onFim,
 }: {
   clienteId: string;
   missaoId: string;
   metaM: number;
+  coletiva: boolean;
   onFim: (
     nomes: string[],
     final: { metros: number; duracaoS: number; trilha: { lat: number; lng: number }[] },
@@ -337,6 +353,8 @@ function RastreadorGps({
   const [recuperavel, setRecuperavel] = useState<EstadoRastreio | null>(null);
   const [montado, setMontado] = useState(false);
   const [bloqueado, setBloqueado] = useState(false);
+  const [parceiros, setParceiros] = useState<Parceiro[]>([]);
+  const [compartilhando, setCompartilhando] = useState<boolean | null>(null);
   const finalizandoRef = useRef(false);
 
   useEffect(() => {
@@ -357,9 +375,48 @@ function RastreadorGps({
     return () => document.removeEventListener("visibilitychange", aoFoco);
   }, []);
 
+  // Preferência de privacidade do aluno (compartilhar localização com colegas).
+  useEffect(() => {
+    if (!coletiva) return;
+    let vivo = true;
+    void getCompartilharLocal(clienteId).then((v) => {
+      if (vivo) setCompartilhando(v);
+    });
+    return () => {
+      vivo = false;
+    };
+  }, [coletiva, clienteId]);
+
   const ativo = estado.status === "ativo";
   const pausado = estado.status === "pausado";
   const rodando = ativo || pausado;
+
+  // Presença ao vivo: publica a posição e busca quem está a até 100 m (7 em 7 s).
+  const posicaoRef = useRef(estado.atual);
+  posicaoRef.current = estado.atual;
+  const rodandoPresenca = coletiva && compartilhando === true && estado.status === "ativo";
+
+  useEffect(() => {
+    if (!rodandoPresenca) {
+      setParceiros([]);
+      return;
+    }
+    let vivo = true;
+    const ciclo = async () => {
+      const pos = posicaoRef.current;
+      if (!pos) return;
+      await publicarPosicao(clienteId, missaoId, pos);
+      const lista = await buscarParceiros(missaoId);
+      if (vivo) setParceiros(lista);
+    };
+    void ciclo();
+    const t = setInterval(() => void ciclo(), INTERVALO_PRESENCA_MS);
+    return () => {
+      vivo = false;
+      clearInterval(t);
+      void sairDaPresenca(clienteId);
+    };
+  }, [rodandoPresenca, clienteId, missaoId]);
 
   const concluirPercurso = useCallback(
     (automatico: boolean) => {
@@ -440,7 +497,13 @@ function RastreadorGps({
             </div>
           }
         >
-          <MapaLeaflet trilha={trilha} atual={atual} ativo={rodando} />
+          <MapaLeaflet
+            trilha={trilha}
+            atual={atual}
+            ativo={rodando}
+            parceiros={coletiva ? parceiros : []}
+            raioM={coletiva ? RAIO_PROXIMIDADE_M : undefined}
+          />
         </Suspense>
       ) : (
         <div className="h-56 border-b border-border bg-muted/30" />
@@ -457,6 +520,31 @@ function RastreadorGps({
             : "sem sinal"}
         </span>
       </div>
+
+      {coletiva && (
+        <div className="border-b border-border px-4 py-2.5 text-xs">
+          {compartilhando === false ? (
+            <p className="flex items-start gap-2 text-muted-foreground">
+              <Users className="mt-0.5 size-4 shrink-0 text-gold" />
+              <span>
+                Compartilhamento de localização desligado — você não aparece para os
+                colegas nem vê quem está por perto. Ative em{" "}
+                <Link to="/app/perfil" className="font-semibold text-primary underline">
+                  Perfil › Privacidade
+                </Link>
+                .
+              </span>
+            </p>
+          ) : (
+            <p className="flex items-center gap-2 font-semibold text-primary">
+              <Users className="size-4" />
+              {parceiros.length > 0
+                ? `${parceiros.length} aluno(s) a até ${RAIO_PROXIMIDADE_M} m de você`
+                : `Nenhum aluno a até ${RAIO_PROXIMIDADE_M} m no momento`}
+            </p>
+          )}
+        </div>
+      )}
 
       <div className="p-5 text-center">
         <Footprints className="mx-auto size-6 text-primary" />

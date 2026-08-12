@@ -118,16 +118,18 @@ function Missoes() {
                     <p className="mt-1 text-[11px] text-muted-foreground">
                       {concluida
                         ? "Missão concluída 🎉"
-                        : m.objetivo === "distancia"
+                        : m.objetivo === "distancia" || m.objetivo === "coletiva"
                           ? `${(progresso / 1000).toFixed(2)} km de ${(m.quantidade / 1000).toFixed(2)} km`
                           : `${progresso}/${m.quantidade} concluídos`}
                     </p>
                     <p className="mt-2 flex items-center gap-1 text-[11px] font-semibold text-primary">
-                      {m.objetivo === "distancia" && !aceita
+                      {(m.objetivo === "distancia" || m.objetivo === "coletiva") && !aceita
                         ? "Abrir missão para aceitar o desafio"
-                        : m.objetivo === "distancia"
-                          ? "Abrir missão para correr com GPS"
-                          : "Ver detalhes da missão"}
+                        : m.objetivo === "coletiva"
+                          ? "Abrir missão coletiva (alunos por perto no mapa)"
+                          : m.objetivo === "distancia"
+                            ? "Abrir missão para correr com GPS"
+                            : "Ver detalhes da missão"}
                       <ChevronRight className="size-3" />
                     </p>
                   </Link>

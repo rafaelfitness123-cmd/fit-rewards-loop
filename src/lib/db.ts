@@ -32,7 +32,7 @@ export type QRCodeItem = {
 };
 
 export type MissaoTipo = "diaria" | "semanal" | "mensal" | "especial";
-export type MissaoObjetivo = "treinos" | "dia_semana" | "distancia";
+export type MissaoObjetivo = "treinos" | "dia_semana" | "distancia" | "coletiva";
 
 export type Missao = {
   id: string;

@@ -1,6 +1,9 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
-import { CalendarDays, Flame, LogOut, Plus, Star, Timer, Trophy } from "lucide-react";
+import { CalendarDays, Flame, LogOut, MapPin, Plus, Star, Timer, Trophy } from "lucide-react";
+import { toast } from "sonner";
+import { Switch } from "@/components/ui/switch";
+import { getCompartilharLocal, RAIO_PROXIMIDADE_M, setCompartilharLocal } from "@/lib/presenca";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import FotoPublicacao from "@/components/FotoPublicacao";
@@ -217,6 +220,8 @@ function Perfil() {
         </TabsContent>
       </Tabs>
 
+      <PrivacidadeLocalizacao clienteId={cliente.id} />
+
       <Button
         variant="secondary"
         className="w-full"
@@ -228,6 +233,62 @@ function Perfil() {
         <LogOut className="mr-2 size-4" /> Sair da conta
       </Button>
     </div>
+  );
+}
+
+/** Preferência de privacidade: compartilhar localização em missões coletivas. */
+function PrivacidadeLocalizacao({ clienteId }: { clienteId: string }) {
+  const [ligado, setLigado] = useState<boolean | null>(null);
+  const [salvando, setSalvando] = useState(false);
+
+  useEffect(() => {
+    let vivo = true;
+    void getCompartilharLocal(clienteId).then((v) => {
+      if (vivo) setLigado(v);
+    });
+    return () => {
+      vivo = false;
+    };
+  }, [clienteId]);
+
+  const alternar = async (valor: boolean) => {
+    setSalvando(true);
+    const anterior = ligado;
+    setLigado(valor);
+    try {
+      await setCompartilharLocal(clienteId, valor);
+      toast.success(
+        valor
+          ? "Localização compartilhada durante missões coletivas."
+          : "Compartilhamento de localização desligado.",
+      );
+    } catch {
+      setLigado(anterior);
+      toast.error("Não foi possível salvar a preferência.");
+    } finally {
+      setSalvando(false);
+    }
+  };
+
+  return (
+    <section className="surface space-y-3 p-4">
+      <p className="flex items-center gap-2 text-sm font-bold">
+        <MapPin className="size-4 text-primary" /> Privacidade da localização
+      </p>
+      <div className="flex items-start justify-between gap-4">
+        <p className="text-xs text-muted-foreground">
+          Ao ativar, durante uma missão coletiva os alunos participantes que estiverem a
+          até {RAIO_PROXIMIDADE_M} m de você veem seu ícone no mapa (atualiza a cada 7
+          segundos). Fora da missão nada é compartilhado.
+        </p>
+        <Switch
+          checked={ligado === true}
+          disabled={ligado === null || salvando}
+          onCheckedChange={(v) => void alternar(v)}
+          aria-label="Compartilhar minha localização em missões coletivas"
+        />
+      </div>
+    </section>
   );
 }
 

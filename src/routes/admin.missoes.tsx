@@ -145,8 +145,10 @@ function MissoesAdmin() {
                 {m.tipo} ·{" "}
                 {m.objetivo === "dia_semana"
                   ? `treinar ${m.quantidade}x em ${DIAS[m.diaSemana ?? 6]}`
-                  : m.objetivo === "distancia"
-                    ? `percorrer ${(m.quantidade / 1000).toFixed(2)} km`
+                  : m.objetivo === "coletiva"
+                    ? `coletiva · percorrer ${(m.quantidade / 1000).toFixed(2)} km com o mapa dos participantes`
+                    : m.objetivo === "distancia"
+                      ? `percorrer ${(m.quantidade / 1000).toFixed(2)} km`
                     : `${m.quantidade} treinos`}{" "}
                 · +{m.pontos} pts
                 {m.inicio ? ` · de ${m.inicio}` : ""}
@@ -217,6 +219,9 @@ function MissoesAdmin() {
                     <SelectItem value="treinos">Quantidade de treinos</SelectItem>
                     <SelectItem value="dia_semana">Treinar em um dia específico</SelectItem>
                     <SelectItem value="distancia">Correr/caminhar distância (GPS)</SelectItem>
+                    <SelectItem value="coletiva">
+                      Coletiva (GPS + alunos a até 100 m no mapa)
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -244,7 +249,7 @@ function MissoesAdmin() {
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label>
-                  {form.objetivo === "distancia"
+                  {form.objetivo === "distancia" || form.objetivo === "coletiva"
                     ? "Distância necessária (metros)"
                     : "Quantidade necessária"}
                 </Label>
