@@ -21,6 +21,10 @@ import {
   type Treino,
 } from "./db";
 
+/** Missões que usam rastreamento GPS (distância individual ou coletiva). */
+export const ehGps = (objetivo: string) =>
+  objetivo === "distancia" || objetivo === "coletiva";
+
 export const diaKey = (d: Date) =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(
     2,
@@ -178,7 +182,7 @@ export function progressoDaMissao(clienteId: string, m: Missao, ref = new Date()
       missaoId: m.id,
       periodo,
       progresso: calculado,
-      aceita: m.objetivo !== "distancia",
+      aceita: !ehGps(m.objetivo),
       concluida: calculado >= m.quantidade,
       concedida: false,
       atualizadoEm: new Date().toISOString(),
@@ -191,7 +195,7 @@ function calcularProgresso(clienteId: string, m: Missao, ref: Date) {
   const limiteInicio = m.inicio ? new Date(`${m.inicio}T00:00:00`) : null;
   const limiteFim = m.fim ? new Date(`${m.fim}T23:59:59`) : null;
 
-  if (m.objetivo === "distancia") {
+  if (ehGps(m.objetivo)) {
     let metros = 0;
     for (const c of getCorridas()) {
       if (c.clienteId !== clienteId) continue;
@@ -229,7 +233,7 @@ export function avaliarMissoes(clienteId: string): string[] {
     const idx = progressos.findIndex((p) => p.id === id);
     const anterior = idx >= 0 ? progressos[idx] : null;
     // Missões de distância só contam depois que o aluno aceita o desafio.
-    if (m.objetivo === "distancia" && !anterior?.aceita) continue;
+    if (ehGps(m.objetivo) && !anterior?.aceita) continue;
     const valor = calcularProgresso(clienteId, m, ref);
     const concluida = valor >= m.quantidade;
     const jaConcedida = anterior?.concedida ?? false;
@@ -239,7 +243,7 @@ export function avaliarMissoes(clienteId: string): string[] {
       missaoId: m.id,
       periodo,
       progresso: Math.min(valor, m.quantidade),
-      aceita: anterior?.aceita ?? m.objetivo !== "distancia",
+      aceita: anterior?.aceita ?? !ehGps(m.objetivo),
       concluida,
       concedida: jaConcedida || (concluida && m.pontos > 0),
       atualizadoEm: new Date().toISOString(),
