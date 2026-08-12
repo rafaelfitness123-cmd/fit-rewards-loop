@@ -1,28 +1,53 @@
 import { useEffect, useRef, useState } from "react";
-import type { Map as LeafletMap, Marker, Polyline, CircleMarker } from "leaflet";
+import type { Map as LeafletMap, Marker, Polyline, CircleMarker, Circle } from "leaflet";
 import { LocateFixed } from "lucide-react";
 import "leaflet/dist/leaflet.css";
 
 export type CoordMapa = { lat: number; lng: number };
 
+export type ParceiroMapa = {
+  clienteId: string;
+  nome: string;
+  avatar: string | null;
+  lat: number;
+  lng: number;
+  distanciaM: number;
+};
+
+const iniciais = (nome: string) =>
+  nome
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase() || "?";
+
 /**
- * Mapa real (OpenStreetMap + Leaflet) com a posição do aluno e o traçado
- * percorrido. Carregado apenas no cliente.
+ * Mapa real (OpenStreetMap + Leaflet) com a posição do aluno, o traçado
+ * percorrido e — em missões coletivas — os participantes por perto.
+ * Carregado apenas no cliente.
  */
 export default function MapaLeaflet({
   trilha,
   atual,
   ativo,
+  parceiros = [],
+  raioM,
 }: {
   trilha: CoordMapa[];
   atual: CoordMapa | null;
   ativo: boolean;
+  parceiros?: ParceiroMapa[];
+  raioM?: number | undefined;
 }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<LeafletMap | null>(null);
   const linhaRef = useRef<Polyline | null>(null);
   const marcadorRef = useRef<Marker | CircleMarker | null>(null);
   const inicioRef = useRef<CircleMarker | null>(null);
+  const raioRef = useRef<Circle | null>(null);
+  const parceirosRef = useRef<Map<string, { marcador: Marker; linha: Polyline }>>(new Map());
   const arrastouEm = useRef<number>(0);
   const [pronto, setPronto] = useState(false);
   const [seguindo, setSeguindo] = useState(true);
@@ -59,6 +84,8 @@ export default function MapaLeaflet({
       linhaRef.current = null;
       marcadorRef.current = null;
       inicioRef.current = null;
+      raioRef.current = null;
+      parceirosRef.current.clear();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -125,11 +152,67 @@ export default function MapaLeaflet({
           });
         }
       }
+
+      // Círculo do raio de proximidade (missões coletivas).
+      if (raioM && atual) {
+        if (!raioRef.current) {
+          raioRef.current = L.circle([atual.lat, atual.lng], {
+            radius: raioM,
+            color: "#22e06a",
+            weight: 1,
+            opacity: 0.5,
+            fillColor: "#22e06a",
+            fillOpacity: 0.06,
+          }).addTo(map);
+        } else {
+          raioRef.current.setLatLng([atual.lat, atual.lng]);
+          raioRef.current.setRadius(raioM);
+        }
+      } else if (raioRef.current) {
+        raioRef.current.remove();
+        raioRef.current = null;
+      }
+
+      // Participantes próximos: ícone do perfil + linha de conexão.
+      const vivos = new Set(parceiros.map((p) => p.clienteId));
+      parceirosRef.current.forEach((ref, id) => {
+        if (!vivos.has(id)) {
+          ref.marcador.remove();
+          ref.linha.remove();
+          parceirosRef.current.delete(id);
+        }
+      });
+
+      for (const p of parceiros) {
+        const html = p.avatar
+          ? `<img src="${p.avatar}" alt="" class="size-9 rounded-full object-cover ring-2 ring-[#22e06a] shadow-lg" />`
+          : `<span class="flex size-9 items-center justify-center rounded-full bg-[#0b0f0d] text-[11px] font-black text-[#22e06a] ring-2 ring-[#22e06a] shadow-lg">${iniciais(p.nome)}</span>`;
+        const icone = L.divIcon({
+          html: `<div class="flex flex-col items-center gap-0.5">${html}<span class="rounded-full bg-[#0b0f0d]/85 px-1.5 py-0.5 text-[9px] font-bold text-white">${Math.round(p.distanciaM)} m</span></div>`,
+          className: "pulsefit-parceiro",
+          iconSize: [36, 50],
+          iconAnchor: [18, 18],
+        });
+
+        const existente = parceirosRef.current.get(p.clienteId);
+        if (existente) {
+          existente.marcador.setLatLng([p.lat, p.lng]);
+          existente.marcador.setIcon(icone);
+          if (atual) existente.linha.setLatLngs([[atual.lat, atual.lng], [p.lat, p.lng]]);
+        } else {
+          const marcador = L.marker([p.lat, p.lng], { icon: icone, title: p.nome }).addTo(map);
+          const linha = L.polyline(
+            atual ? [[atual.lat, atual.lng], [p.lat, p.lng]] : [[p.lat, p.lng]],
+            { color: "#22e06a", weight: 2, opacity: 0.55, dashArray: "4 6" },
+          ).addTo(map);
+          parceirosRef.current.set(p.clienteId, { marcador, linha });
+        }
+      }
     })();
     return () => {
       cancelado = true;
     };
-  }, [trilha, atual, pronto, seguindo]);
+  }, [trilha, atual, pronto, seguindo, parceiros, raioM]);
 
   const recentralizar = () => {
     const map = mapRef.current;
