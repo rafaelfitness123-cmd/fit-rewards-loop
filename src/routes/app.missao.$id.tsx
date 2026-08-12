@@ -7,6 +7,7 @@ import {
   Crosshair,
   Footprints,
   Lock,
+  Users,
   MapPin,
   Pause,
   Play,
@@ -21,12 +22,22 @@ import { DIAS, getMissoes, type Missao } from "@/lib/db";
 import { useClienteAtual, useStore } from "@/lib/session";
 import { rastreador, type EstadoRastreio } from "@/lib/rastreador-gps";
 import {
+  buscarParceiros,
+  getCompartilharLocal,
+  INTERVALO_PRESENCA_MS,
+  publicarPosicao,
+  RAIO_PROXIMIDADE_M,
+  sairDaPresenca,
+  type Parceiro,
+} from "@/lib/presenca";
+import {
   guardarRascunhoMissao,
   legendaSugerida,
   type MissaoSnapshot,
 } from "@/lib/comunidade";
 import {
   aceitarMissao,
+  ehGps,
   corridasDe,
   fmtDataHora,
   fmtDistancia,
@@ -136,7 +147,9 @@ function DetalheMissao() {
   const vigente = missaoVigente(m);
 
   const comoFazer =
-    m.objetivo === "distancia"
+    m.objetivo === "coletiva"
+      ? `Missão coletiva: percorra ${fmtDistancia(m.quantidade)} com o GPS ligado. Quem estiver participando e a até ${RAIO_PROXIMIDADE_M} m de você aparece no mapa em tempo real (atualiza a cada 7 s).`
+      : m.objetivo === "distancia"
       ? `Percorra ${fmtDistancia(m.quantidade)} correndo ou caminhando. Use o rastreador GPS desta tela — ele conta a distância somente para esta missão.`
       : m.objetivo === "dia_semana"
         ? `Faça check-in na academia ${m.quantidade}x em ${DIAS[m.diaSemana ?? 6]}, escaneando o QR Code da recepção.`
@@ -176,7 +189,7 @@ function DetalheMissao() {
         <p className="text-[11px] text-muted-foreground">
           {concluida
             ? "Missão concluída 🎉"
-            : m.objetivo === "distancia"
+            : ehGps(m.objetivo)
               ? `${fmtDistancia(progresso)} de ${fmtDistancia(m.quantidade)}`
               : `${progresso}/${m.quantidade} concluídos`}
         </p>
@@ -187,7 +200,7 @@ function DetalheMissao() {
         )}
       </section>
 
-      {m.objetivo === "distancia" && vigente && !concluida && (
+      {ehGps(m.objetivo) && vigente && !concluida && (
         <>
           {!p?.aceita ? (
             <section className="surface space-y-3 p-4">
@@ -211,6 +224,7 @@ function DetalheMissao() {
               <RastreadorGps
                 clienteId={clienteId}
                 missaoId={m.id}
+                coletiva={m.objetivo === "coletiva"}
                 metaM={Math.max(1, m.quantidade - progresso)}
                 onFim={(nomes, final) => {
                   setUltimo(final);
@@ -248,7 +262,7 @@ function DetalheMissao() {
                 objetivo: m.objetivo,
                 pontos: m.pontos,
                 concluidaEm: new Date().toISOString(),
-                ...(m.objetivo === "distancia" && melhor
+                ...(ehGps(m.objetivo) && melhor
                   ? {
                       distanciaM: melhor.metros,
                       duracaoS: melhor.duracaoS,
@@ -269,7 +283,7 @@ function DetalheMissao() {
       )}
 
 
-      {m.objetivo === "distancia" && dados.corridas.length > 0 && (
+      {ehGps(m.objetivo) && dados.corridas.length > 0 && (
         <section className="space-y-3">
           <h2 className="text-sm font-bold">Percursos desta missão</h2>
           {dados.corridas.map((c) => (
@@ -315,11 +329,13 @@ function RastreadorGps({
   clienteId,
   missaoId,
   metaM,
+  coletiva,
   onFim,
 }: {
   clienteId: string;
   missaoId: string;
   metaM: number;
+  coletiva: boolean;
   onFim: (
     nomes: string[],
     final: { metros: number; duracaoS: number; trilha: { lat: number; lng: number }[] },
