@@ -353,6 +353,8 @@ function RastreadorGps({
   const [recuperavel, setRecuperavel] = useState<EstadoRastreio | null>(null);
   const [montado, setMontado] = useState(false);
   const [bloqueado, setBloqueado] = useState(false);
+  const [parceiros, setParceiros] = useState<Parceiro[]>([]);
+  const [compartilhando, setCompartilhando] = useState<boolean | null>(null);
   const finalizandoRef = useRef(false);
 
   useEffect(() => {
@@ -373,9 +375,48 @@ function RastreadorGps({
     return () => document.removeEventListener("visibilitychange", aoFoco);
   }, []);
 
+  // Preferência de privacidade do aluno (compartilhar localização com colegas).
+  useEffect(() => {
+    if (!coletiva) return;
+    let vivo = true;
+    void getCompartilharLocal(clienteId).then((v) => {
+      if (vivo) setCompartilhando(v);
+    });
+    return () => {
+      vivo = false;
+    };
+  }, [coletiva, clienteId]);
+
   const ativo = estado.status === "ativo";
   const pausado = estado.status === "pausado";
   const rodando = ativo || pausado;
+
+  // Presença ao vivo: publica a posição e busca quem está a até 100 m (7 em 7 s).
+  const posicaoRef = useRef(estado.atual);
+  posicaoRef.current = estado.atual;
+  const rodandoPresenca = coletiva && compartilhando === true && estado.status === "ativo";
+
+  useEffect(() => {
+    if (!rodandoPresenca) {
+      setParceiros([]);
+      return;
+    }
+    let vivo = true;
+    const ciclo = async () => {
+      const pos = posicaoRef.current;
+      if (!pos) return;
+      await publicarPosicao(clienteId, missaoId, pos);
+      const lista = await buscarParceiros(missaoId);
+      if (vivo) setParceiros(lista);
+    };
+    void ciclo();
+    const t = setInterval(() => void ciclo(), INTERVALO_PRESENCA_MS);
+    return () => {
+      vivo = false;
+      clearInterval(t);
+      void sairDaPresenca(clienteId);
+    };
+  }, [rodandoPresenca, clienteId, missaoId]);
 
   const concluirPercurso = useCallback(
     (automatico: boolean) => {
@@ -456,7 +497,13 @@ function RastreadorGps({
             </div>
           }
         >
-          <MapaLeaflet trilha={trilha} atual={atual} ativo={rodando} />
+          <MapaLeaflet
+            trilha={trilha}
+            atual={atual}
+            ativo={rodando}
+            parceiros={coletiva ? parceiros : []}
+            raioM={coletiva ? RAIO_PROXIMIDADE_M : undefined}
+          />
         </Suspense>
       ) : (
         <div className="h-56 border-b border-border bg-muted/30" />
@@ -473,6 +520,31 @@ function RastreadorGps({
             : "sem sinal"}
         </span>
       </div>
+
+      {coletiva && (
+        <div className="border-b border-border px-4 py-2.5 text-xs">
+          {compartilhando === false ? (
+            <p className="flex items-start gap-2 text-muted-foreground">
+              <Users className="mt-0.5 size-4 shrink-0 text-gold" />
+              <span>
+                Compartilhamento de localização desligado — você não aparece para os
+                colegas nem vê quem está por perto. Ative em{" "}
+                <Link to="/app/perfil" className="font-semibold text-primary underline">
+                  Perfil › Privacidade
+                </Link>
+                .
+              </span>
+            </p>
+          ) : (
+            <p className="flex items-center gap-2 font-semibold text-primary">
+              <Users className="size-4" />
+              {parceiros.length > 0
+                ? `${parceiros.length} aluno(s) a até ${RAIO_PROXIMIDADE_M} m de você`
+                : `Nenhum aluno a até ${RAIO_PROXIMIDADE_M} m no momento`}
+            </p>
+          )}
+        </div>
+      )}
 
       <div className="p-5 text-center">
         <Footprints className="mx-auto size-6 text-primary" />
