@@ -42,6 +42,8 @@ export type Missao = {
   objetivo: MissaoObjetivo;
   diaSemana: number | null;
   quantidade: number;
+  /** Raio (m) de proximidade no mapa — usado nas missões coletivas. */
+  raioM: number;
   pontos: number;
   inicio: string | null;
   fim: string | null;
