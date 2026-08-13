@@ -131,6 +131,7 @@ export type Database = {
           objetivo: string
           pontos: number
           quantidade: number
+          raio_m: number
           tipo: string
         }
         Insert: {
@@ -145,6 +146,7 @@ export type Database = {
           objetivo?: string
           pontos?: number
           quantidade?: number
+          raio_m?: number
           tipo?: string
         }
         Update: {
@@ -159,6 +161,7 @@ export type Database = {
           objetivo?: string
           pontos?: number
           quantidade?: number
+          raio_m?: number
           tipo?: string
         }
         Relationships: []
@@ -210,6 +213,7 @@ export type Database = {
           id: string
           nome: string
           pontos: number
+          visibilidade_local: string
         }
         Insert: {
           avatar?: string | null
@@ -219,6 +223,7 @@ export type Database = {
           id: string
           nome?: string
           pontos?: number
+          visibilidade_local?: string
         }
         Update: {
           avatar?: string | null
@@ -228,6 +233,7 @@ export type Database = {
           id?: string
           nome?: string
           pontos?: number
+          visibilidade_local?: string
         }
         Relationships: []
       }
@@ -512,6 +518,27 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      seguidores: {
+        Row: {
+          created_at: string
+          id: string
+          seguido_id: string
+          seguidor_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          seguido_id: string
+          seguidor_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          seguido_id?: string
+          seguidor_id?: string
+        }
+        Relationships: []
       }
       treinos: {
         Row: {
