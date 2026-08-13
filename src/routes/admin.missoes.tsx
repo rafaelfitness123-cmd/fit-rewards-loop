@@ -95,6 +95,7 @@ function MissoesAdmin() {
       nome: form.nome.trim(),
       descricao: form.descricao.trim(),
       quantidade: Math.max(1, Number(form.quantidade) || 1),
+      raioM: Math.min(5000, Math.max(10, Number(form.raioM) || 100)),
       pontos: Math.max(0, Number(form.pontos) || 0),
       diaSemana: form.objetivo === "dia_semana" ? (form.diaSemana ?? 6) : null,
     };
