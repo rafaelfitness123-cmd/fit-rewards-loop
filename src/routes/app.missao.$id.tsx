@@ -148,7 +148,7 @@ function DetalheMissao() {
 
   const comoFazer =
     m.objetivo === "coletiva"
-      ? `Missão coletiva: percorra ${fmtDistancia(m.quantidade)} com o GPS ligado. Quem estiver participando e a até ${RAIO_PROXIMIDADE_M} m de você aparece no mapa em tempo real (atualiza a cada 7 s).`
+      ? `Missão coletiva: percorra ${fmtDistancia(m.quantidade)} com o GPS ligado. Quem estiver participando e a até ${m.raioM} m de você aparece no mapa em tempo real (atualiza a cada 7 s).`
       : m.objetivo === "distancia"
       ? `Percorra ${fmtDistancia(m.quantidade)} correndo ou caminhando. Use o rastreador GPS desta tela — ele conta a distância somente para esta missão.`
       : m.objetivo === "dia_semana"
