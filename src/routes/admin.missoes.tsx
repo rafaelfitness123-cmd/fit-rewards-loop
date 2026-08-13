@@ -222,7 +222,7 @@ function MissoesAdmin() {
                     <SelectItem value="dia_semana">Treinar em um dia específico</SelectItem>
                     <SelectItem value="distancia">Correr/caminhar distância (GPS)</SelectItem>
                     <SelectItem value="coletiva">
-                      Coletiva (GPS + alunos a até 100 m no mapa)
+                      Coletiva (GPS + alunos próximos no mapa)
                     </SelectItem>
                   </SelectContent>
                 </Select>
