@@ -253,6 +253,7 @@ const mapMissao = (r: Row): Missao => ({
   objetivo: str(r["objetivo"]) as MissaoObjetivo,
   diaSemana: r["dia_semana"] == null ? null : num(r["dia_semana"]),
   quantidade: num(r["quantidade"]),
+  raioM: r["raio_m"] == null ? 100 : num(r["raio_m"]),
   pontos: num(r["pontos"]),
   inicio: (r["inicio"] as string | null) ?? null,
   fim: (r["fim"] as string | null) ?? null,
