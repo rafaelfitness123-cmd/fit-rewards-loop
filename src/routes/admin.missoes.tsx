@@ -248,6 +248,23 @@ function MissoesAdmin() {
                 </Select>
               </div>
             )}
+            {form.objetivo === "coletiva" && (
+              <div className="space-y-2">
+                <Label>Distância máxima para ver os colegas no mapa (metros)</Label>
+                <Input
+                  type="number"
+                  min={10}
+                  max={5000}
+                  step={10}
+                  value={form.raioM}
+                  onChange={(e) => setForm({ ...form, raioM: Number(e.target.value) })}
+                />
+                <p className="text-[11px] text-muted-foreground">
+                  Participantes dentro desse raio aparecem no mapa uns dos outros
+                  (padrão 100 m · mínimo 10 m · máximo 5000 m).
+                </p>
+              </div>
+            )}
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label>
