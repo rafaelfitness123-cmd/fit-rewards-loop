@@ -59,6 +59,7 @@ const vazio: Form = {
   objetivo: "treinos",
   diaSemana: null,
   quantidade: 3,
+  raioM: 100,
   pontos: 100,
   inicio: null,
   fim: null,
@@ -94,6 +95,7 @@ function MissoesAdmin() {
       nome: form.nome.trim(),
       descricao: form.descricao.trim(),
       quantidade: Math.max(1, Number(form.quantidade) || 1),
+      raioM: Math.min(5000, Math.max(10, Number(form.raioM) || 100)),
       pontos: Math.max(0, Number(form.pontos) || 0),
       diaSemana: form.objetivo === "dia_semana" ? (form.diaSemana ?? 6) : null,
     };
@@ -146,7 +148,7 @@ function MissoesAdmin() {
                 {m.objetivo === "dia_semana"
                   ? `treinar ${m.quantidade}x em ${DIAS[m.diaSemana ?? 6]}`
                   : m.objetivo === "coletiva"
-                    ? `coletiva · percorrer ${(m.quantidade / 1000).toFixed(2)} km com o mapa dos participantes`
+                    ? `coletiva · percorrer ${(m.quantidade / 1000).toFixed(2)} km · amigos a até ${m.raioM} m no mapa`
                     : m.objetivo === "distancia"
                       ? `percorrer ${(m.quantidade / 1000).toFixed(2)} km`
                     : `${m.quantidade} treinos`}{" "}
@@ -220,7 +222,7 @@ function MissoesAdmin() {
                     <SelectItem value="dia_semana">Treinar em um dia específico</SelectItem>
                     <SelectItem value="distancia">Correr/caminhar distância (GPS)</SelectItem>
                     <SelectItem value="coletiva">
-                      Coletiva (GPS + alunos a até 100 m no mapa)
+                      Coletiva (GPS + alunos próximos no mapa)
                     </SelectItem>
                   </SelectContent>
                 </Select>
@@ -244,6 +246,23 @@ function MissoesAdmin() {
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
+            )}
+            {form.objetivo === "coletiva" && (
+              <div className="space-y-2">
+                <Label>Distância máxima para ver os colegas no mapa (metros)</Label>
+                <Input
+                  type="number"
+                  min={10}
+                  max={5000}
+                  step={10}
+                  value={form.raioM}
+                  onChange={(e) => setForm({ ...form, raioM: Number(e.target.value) })}
+                />
+                <p className="text-[11px] text-muted-foreground">
+                  Participantes dentro desse raio aparecem no mapa uns dos outros
+                  (padrão 100 m · mínimo 10 m · máximo 5000 m).
+                </p>
               </div>
             )}
             <div className="grid gap-3 sm:grid-cols-2">
