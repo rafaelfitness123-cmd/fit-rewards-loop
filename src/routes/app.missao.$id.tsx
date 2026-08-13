@@ -225,6 +225,7 @@ function DetalheMissao() {
                 clienteId={clienteId}
                 missaoId={m.id}
                 coletiva={m.objetivo === "coletiva"}
+                raioM={m.raioM}
                 metaM={Math.max(1, m.quantidade - progresso)}
                 onFim={(nomes, final) => {
                   setUltimo(final);
