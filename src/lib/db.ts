@@ -471,6 +471,7 @@ export function setMissoes(lista: Missao[]) {
     objetivo: m.objetivo,
     dia_semana: m.diaSemana,
     quantidade: m.quantidade,
+    raio_m: m.raioM,
     pontos: m.pontos,
     inicio: m.inicio,
     fim: m.fim,
