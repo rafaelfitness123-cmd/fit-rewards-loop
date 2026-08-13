@@ -59,6 +59,7 @@ const vazio: Form = {
   objetivo: "treinos",
   diaSemana: null,
   quantidade: 3,
+  raioM: 100,
   pontos: 100,
   inicio: null,
   fim: null,
