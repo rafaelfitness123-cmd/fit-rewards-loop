@@ -148,7 +148,7 @@ function MissoesAdmin() {
                 {m.objetivo === "dia_semana"
                   ? `treinar ${m.quantidade}x em ${DIAS[m.diaSemana ?? 6]}`
                   : m.objetivo === "coletiva"
-                    ? `coletiva · percorrer ${(m.quantidade / 1000).toFixed(2)} km com o mapa dos participantes`
+                    ? `coletiva · percorrer ${(m.quantidade / 1000).toFixed(2)} km · amigos a até ${m.raioM} m no mapa`
                     : m.objetivo === "distancia"
                       ? `percorrer ${(m.quantidade / 1000).toFixed(2)} km`
                     : `${m.quantidade} treinos`}{" "}
