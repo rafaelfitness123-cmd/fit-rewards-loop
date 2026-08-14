@@ -331,12 +331,14 @@ function RastreadorGps({
   missaoId,
   metaM,
   coletiva,
+  raioM,
   onFim,
 }: {
   clienteId: string;
   missaoId: string;
   metaM: number;
   coletiva: boolean;
+  raioM: number;
   onFim: (
     nomes: string[],
     final: { metros: number; duracaoS: number; trilha: { lat: number; lng: number }[] },
