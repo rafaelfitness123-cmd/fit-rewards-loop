@@ -113,6 +113,8 @@ function Comunidade() {
         </Link>
       </Button>
 
+      <BuscaAlunos alunos={[...autores.values()]} meuId={meuId} />
+
       {erro && (
         <div className="surface space-y-3 p-4">
           <p className="text-sm text-destructive">{erro}</p>
