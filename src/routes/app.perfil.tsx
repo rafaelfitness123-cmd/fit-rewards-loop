@@ -251,6 +251,7 @@ function Perfil() {
 /** Preferência de privacidade: compartilhar localização em missões coletivas. */
 function PrivacidadeLocalizacao({ clienteId }: { clienteId: string }) {
   const [ligado, setLigado] = useState<boolean | null>(null);
+  const [visibilidade, setVisibilidade] = useState<VisibilidadeLocal>("todos");
   const [salvando, setSalvando] = useState(false);
 
   useEffect(() => {
@@ -258,10 +259,30 @@ function PrivacidadeLocalizacao({ clienteId }: { clienteId: string }) {
     void getCompartilharLocal(clienteId).then((v) => {
       if (vivo) setLigado(v);
     });
+    void getVisibilidadeLocal(clienteId).then((v) => {
+      if (vivo) setVisibilidade(v);
+    });
     return () => {
       vivo = false;
     };
   }, [clienteId]);
+
+  const trocarVisibilidade = async (valor: VisibilidadeLocal) => {
+    const anterior = visibilidade;
+    setVisibilidade(valor);
+    try {
+      await setVisibilidadeLocal(clienteId, valor);
+      toast.success(
+        valor === "todos"
+          ? "Todos os participantes da missão podem ver você."
+          : "Somente os alunos que você segue podem ver você.",
+      );
+    } catch {
+      setVisibilidade(anterior);
+      toast.error("Não foi possível salvar a preferência.");
+    }
+  };
+
 
   const alternar = async (valor: boolean) => {
     setSalvando(true);
