@@ -144,6 +144,9 @@ function PerfilPublico() {
         </div>
         <h1 className="mt-3 text-xl font-black">{aluno.nome}</h1>
         <p className="text-xs text-muted-foreground">Companhia Fitness</p>
+        <div className="mt-3 flex justify-center">
+          <BotaoSeguir meuId={meuId} alunoId={aluno.id} />
+        </div>
       </section>
 
       <section className="grid grid-cols-4 gap-2">
