@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Plus, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import PublicacaoCard from "@/components/PublicacaoCard";
+import BuscaAlunos from "@/components/BuscaAlunos";
 import { getClientes, getSessao } from "@/lib/db";
 import { useClienteAtual, useStore } from "@/lib/session";
 import { listarFeed, PAGINA, type Publicacao } from "@/lib/comunidade";
@@ -112,6 +113,8 @@ function Comunidade() {
           <Plus className="mr-2 size-4" /> Criar publicação
         </Link>
       </Button>
+
+      <BuscaAlunos alunos={[...autores.values()]} meuId={meuId} />
 
       {erro && (
         <div className="surface space-y-3 p-4">

@@ -3,7 +3,19 @@ import { useCallback, useEffect, useState } from "react";
 import { CalendarDays, Flame, LogOut, MapPin, Plus, Star, Timer, Trophy } from "lucide-react";
 import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
-import { getCompartilharLocal, RAIO_PROXIMIDADE_M, setCompartilharLocal } from "@/lib/presenca";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { getCompartilharLocal, setCompartilharLocal } from "@/lib/presenca";
+import {
+  getVisibilidadeLocal,
+  setVisibilidadeLocal,
+  type VisibilidadeLocal,
+} from "@/lib/seguidores";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import FotoPublicacao from "@/components/FotoPublicacao";
@@ -239,6 +251,7 @@ function Perfil() {
 /** Preferência de privacidade: compartilhar localização em missões coletivas. */
 function PrivacidadeLocalizacao({ clienteId }: { clienteId: string }) {
   const [ligado, setLigado] = useState<boolean | null>(null);
+  const [visibilidade, setVisibilidade] = useState<VisibilidadeLocal>("todos");
   const [salvando, setSalvando] = useState(false);
 
   useEffect(() => {
@@ -246,10 +259,30 @@ function PrivacidadeLocalizacao({ clienteId }: { clienteId: string }) {
     void getCompartilharLocal(clienteId).then((v) => {
       if (vivo) setLigado(v);
     });
+    void getVisibilidadeLocal(clienteId).then((v) => {
+      if (vivo) setVisibilidade(v);
+    });
     return () => {
       vivo = false;
     };
   }, [clienteId]);
+
+  const trocarVisibilidade = async (valor: VisibilidadeLocal) => {
+    const anterior = visibilidade;
+    setVisibilidade(valor);
+    try {
+      await setVisibilidadeLocal(clienteId, valor);
+      toast.success(
+        valor === "todos"
+          ? "Todos os participantes da missão podem ver você."
+          : "Somente os alunos que você segue podem ver você.",
+      );
+    } catch {
+      setVisibilidade(anterior);
+      toast.error("Não foi possível salvar a preferência.");
+    }
+  };
+
 
   const alternar = async (valor: boolean) => {
     setSalvando(true);
@@ -277,9 +310,9 @@ function PrivacidadeLocalizacao({ clienteId }: { clienteId: string }) {
       </p>
       <div className="flex items-start justify-between gap-4">
         <p className="text-xs text-muted-foreground">
-          Ao ativar, durante uma missão coletiva os alunos participantes que estiverem a
-          até {RAIO_PROXIMIDADE_M} m de você veem seu ícone no mapa (atualiza a cada 7
-          segundos). Fora da missão nada é compartilhado.
+          Ao ativar, durante uma missão coletiva os participantes que estiverem dentro do
+          raio definido pela missão veem seu ícone no mapa (atualiza a cada 7 segundos).
+          Fora da missão nada é compartilhado.
         </p>
         <Switch
           checked={ligado === true}
@@ -288,6 +321,24 @@ function PrivacidadeLocalizacao({ clienteId }: { clienteId: string }) {
           aria-label="Compartilhar minha localização em missões coletivas"
         />
       </div>
+
+      {ligado && (
+        <div className="space-y-2 border-t border-border pt-3">
+          <p className="text-xs font-semibold">Quem pode me ver no mapa</p>
+          <Select
+            value={visibilidade}
+            onValueChange={(v) => void trocarVisibilidade(v as VisibilidadeLocal)}
+          >
+            <SelectTrigger aria-label="Quem pode ver minha localização">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todos">Todos os participantes da missão</SelectItem>
+              <SelectItem value="seguindo">Apenas os alunos que eu sigo</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      )}
     </section>
   );
 }

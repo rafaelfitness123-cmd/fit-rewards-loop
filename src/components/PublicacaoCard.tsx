@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import BotaoSeguir from "@/components/BotaoSeguir";
 import CardMissao from "@/components/CardMissao";
 import FotoPublicacao from "@/components/FotoPublicacao";
 import {
@@ -231,6 +232,8 @@ export default function PublicacaoCard({
             </span>
           </span>
         </Link>
+
+        <BotaoSeguir meuId={meuId} alunoId={post.autorId} compacto />
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

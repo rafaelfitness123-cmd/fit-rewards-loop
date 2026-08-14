@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import FotoPublicacao from "@/components/FotoPublicacao";
 import PublicacaoCard from "@/components/PublicacaoCard";
+import BotaoSeguir from "@/components/BotaoSeguir";
 import { getClientes, getMissoes, getSessao } from "@/lib/db";
 import { useClienteAtual, useStore } from "@/lib/session";
 import {
@@ -144,6 +145,9 @@ function PerfilPublico() {
         </div>
         <h1 className="mt-3 text-xl font-black">{aluno.nome}</h1>
         <p className="text-xs text-muted-foreground">Companhia Fitness</p>
+        <div className="mt-3 flex justify-center">
+          <BotaoSeguir meuId={meuId} alunoId={aluno.id} />
+        </div>
       </section>
 
       <section className="grid grid-cols-4 gap-2">
