@@ -232,6 +232,8 @@ export default function PublicacaoCard({
           </span>
         </Link>
 
+        <BotaoSeguir meuId={meuId} alunoId={post.autorId} compacto />
+
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button
