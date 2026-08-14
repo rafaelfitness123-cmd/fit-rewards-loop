@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Plus, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import PublicacaoCard from "@/components/PublicacaoCard";
+import BuscaAlunos from "@/components/BuscaAlunos";
 import { getClientes, getSessao } from "@/lib/db";
 import { useClienteAtual, useStore } from "@/lib/session";
 import { listarFeed, PAGINA, type Publicacao } from "@/lib/comunidade";
