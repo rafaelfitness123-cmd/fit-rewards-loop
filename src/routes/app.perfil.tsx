@@ -3,7 +3,19 @@ import { useCallback, useEffect, useState } from "react";
 import { CalendarDays, Flame, LogOut, MapPin, Plus, Star, Timer, Trophy } from "lucide-react";
 import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
-import { getCompartilharLocal, RAIO_PROXIMIDADE_M, setCompartilharLocal } from "@/lib/presenca";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { getCompartilharLocal, setCompartilharLocal } from "@/lib/presenca";
+import {
+  getVisibilidadeLocal,
+  setVisibilidadeLocal,
+  type VisibilidadeLocal,
+} from "@/lib/seguidores";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import FotoPublicacao from "@/components/FotoPublicacao";
