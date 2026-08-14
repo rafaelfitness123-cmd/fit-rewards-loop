@@ -26,7 +26,6 @@ import {
   getCompartilharLocal,
   INTERVALO_PRESENCA_MS,
   publicarPosicao,
-  RAIO_PROXIMIDADE_M,
   sairDaPresenca,
   type Parceiro,
 } from "@/lib/presenca";
@@ -409,7 +408,7 @@ function RastreadorGps({
       const pos = posicaoRef.current;
       if (!pos) return;
       await publicarPosicao(clienteId, missaoId, pos);
-      const lista = await buscarParceiros(missaoId);
+      const lista = await buscarParceiros(missaoId, raioM);
       if (vivo) setParceiros(lista);
     };
     void ciclo();
@@ -419,7 +418,7 @@ function RastreadorGps({
       clearInterval(t);
       void sairDaPresenca(clienteId);
     };
-  }, [rodandoPresenca, clienteId, missaoId]);
+  }, [rodandoPresenca, clienteId, missaoId, raioM]);
 
   const concluirPercurso = useCallback(
     (automatico: boolean) => {
@@ -505,7 +504,7 @@ function RastreadorGps({
             atual={atual}
             ativo={rodando}
             parceiros={coletiva ? parceiros : []}
-            raioM={coletiva ? RAIO_PROXIMIDADE_M : undefined}
+            raioM={coletiva ? raioM : undefined}
           />
         </Suspense>
       ) : (
@@ -542,8 +541,8 @@ function RastreadorGps({
             <p className="flex items-center gap-2 font-semibold text-primary">
               <Users className="size-4" />
               {parceiros.length > 0
-                ? `${parceiros.length} aluno(s) a até ${RAIO_PROXIMIDADE_M} m de você`
-                : `Nenhum aluno a até ${RAIO_PROXIMIDADE_M} m no momento`}
+                ? `${parceiros.length} aluno(s) a até ${raioM} m de você`
+                : `Nenhum aluno a até ${raioM} m no momento`}
             </p>
           )}
         </div>
