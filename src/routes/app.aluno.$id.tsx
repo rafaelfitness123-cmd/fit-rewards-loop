@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import FotoPublicacao from "@/components/FotoPublicacao";
 import PublicacaoCard from "@/components/PublicacaoCard";
+import BotaoSeguir from "@/components/BotaoSeguir";
 import { getClientes, getMissoes, getSessao } from "@/lib/db";
 import { useClienteAtual, useStore } from "@/lib/session";
 import {
