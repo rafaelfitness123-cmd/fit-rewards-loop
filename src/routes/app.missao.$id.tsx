@@ -665,6 +665,15 @@ function RastreadorGps({
           statusTexto={
             pausado ? "pausado" : estado.emMovimento ? "em movimento" : "parado"
           }
+          mapa={
+            <MapaLeaflet
+              trilha={trilha}
+              atual={atual}
+              ativo={rodando}
+              parceiros={coletiva ? parceiros : []}
+              raioM={coletiva ? raioM : undefined}
+            />
+          }
           onDesbloquear={() => setBloqueado(false)}
         />
         </Suspense>

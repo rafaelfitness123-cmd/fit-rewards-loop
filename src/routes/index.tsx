@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Dumbbell, Flame, Loader2, ShieldCheck, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import { EMAIL_ADMIN, emailDoCpf } from "@/lib/cpf";
 import { prepararAdmin } from "@/lib/contas.functions";
 import { iniciarDados, recarregar, useSessao } from "@/lib/session";
 import { toast } from "sonner";
+import BotaoInstalar from "@/components/BotaoInstalar";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -131,8 +132,14 @@ function Login() {
                 {carregando && <Loader2 className="mr-2 size-4 animate-spin" />}
                 Entrar
               </Button>
+              <Link
+                to="/cadastro"
+                className="block rounded-md border border-border py-2.5 text-center text-sm font-bold text-primary"
+              >
+                Criar minha conta
+              </Link>
               <p className="text-center text-xs text-muted-foreground">
-                O acesso do aluno é criado pelo administrador.
+                Recebeu o link da academia? Crie sua conta em 30 segundos.
               </p>
             </form>
           </TabsContent>
@@ -166,6 +173,10 @@ function Login() {
             </form>
           </TabsContent>
         </Tabs>
+      </div>
+
+      <div className="w-full max-w-sm">
+        <BotaoInstalar />
       </div>
     </main>
   );
