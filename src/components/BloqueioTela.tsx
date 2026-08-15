@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { ChevronsRight, Footprints, Lock, Timer } from "lucide-react";
 
 /**
@@ -9,11 +9,14 @@ export default function BloqueioTela({
   metros,
   duracaoS,
   statusTexto,
+  mapa,
   onDesbloquear,
 }: {
   metros: number;
   duracaoS: number;
   statusTexto: string;
+  /** Mapa ao vivo exibido dentro do bloqueio (somente visual, sem toques). */
+  mapa?: ReactNode;
   onDesbloquear: () => void;
 }) {
   const trilhaRef = useRef<HTMLDivElement | null>(null);
@@ -56,12 +59,21 @@ export default function BloqueioTela({
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex flex-col items-center justify-between bg-background/95 p-6 backdrop-blur-md"
+      className="fixed inset-0 z-[100] flex flex-col items-center justify-between gap-4 overflow-y-auto bg-background/95 p-6 backdrop-blur-md"
       onContextMenu={(e) => e.preventDefault()}
     >
       <div className="flex items-center gap-2 rounded-full bg-primary/15 px-4 py-2 text-xs font-bold text-primary">
         <Lock className="size-4" /> Modo seguro ativo
       </div>
+
+      {mapa && (
+        <div className="w-full max-w-sm select-none overflow-hidden rounded-2xl border border-border">
+          {/* pointer-events-none: o mapa continua vivo, mas não aceita toques. */}
+          <div className="pointer-events-none touch-none [&_.leaflet-container]:h-56">
+            {mapa}
+          </div>
+        </div>
+      )}
 
       <div className="text-center">
         <Footprints className="mx-auto size-8 text-primary" />
@@ -73,7 +85,7 @@ export default function BloqueioTela({
           <Timer className="size-4" />
           {mm}:{String(ss).padStart(2, "0")} · {statusTexto}
         </p>
-        <p className="mt-6 text-xs text-muted-foreground">
+        <p className="mt-4 text-xs text-muted-foreground">
           A tela está bloqueada contra toques acidentais. O percurso continua sendo
           registrado normalmente.
         </p>
