@@ -42,10 +42,22 @@ function Cadastro() {
   const enviar = async (e: React.FormEvent) => {
     e.preventDefault();
     const doc = soDigitos(cpf);
-    if (nome.trim().length < 2) return toast.error("Informe seu nome completo.");
-    if (doc.length !== 11) return toast.error("Informe um CPF válido (11 dígitos).");
-    if (senha.length < 6) return toast.error("A senha precisa ter ao menos 6 caracteres.");
-    if (senha !== confirma) return toast.error("As senhas não conferem.");
+    if (nome.trim().length < 2) {
+      toast.error("Informe seu nome completo.");
+      return;
+    }
+    if (doc.length !== 11) {
+      toast.error("Informe um CPF válido (11 dígitos).");
+      return;
+    }
+    if (senha.length < 6) {
+      toast.error("A senha precisa ter ao menos 6 caracteres.");
+      return;
+    }
+    if (senha !== confirma) {
+      toast.error("As senhas não conferem.");
+      return;
+    }
 
     setCarregando(true);
     try {
