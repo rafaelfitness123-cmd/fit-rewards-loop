@@ -45,6 +45,16 @@ function Cadastro() {
   const [confirma, setConfirma] = useState("");
   const [carregando, setCarregando] = useState(false);
 
+  useEffect(() => {
+    if (!convite) {
+      setValido(false);
+      return;
+    }
+    void verificarConvite({ data: { token: convite } })
+      .then((r) => setValido(r.valido))
+      .catch(() => setValido(false));
+  }, [convite]);
+
   const enviar = async (e: React.FormEvent) => {
     e.preventDefault();
     const doc = soDigitos(cpf);
