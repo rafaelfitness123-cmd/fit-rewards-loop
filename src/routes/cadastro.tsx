@@ -37,6 +37,8 @@ export const Route = createFileRoute("/cadastro")({
 
 function Cadastro() {
   const navigate = useNavigate();
+  const { c: convite } = Route.useSearch();
+  const [valido, setValido] = useState<boolean | null>(null);
   const [nome, setNome] = useState("");
   const [cpf, setCpf] = useState("");
   const [senha, setSenha] = useState("");
