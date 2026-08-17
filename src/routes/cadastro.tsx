@@ -77,7 +77,7 @@ function Cadastro() {
 
     setCarregando(true);
     try {
-      await cadastrarAluno({ data: { nome: nome.trim(), cpf: doc, senha } });
+      await cadastrarAluno({ data: { nome: nome.trim(), cpf: doc, senha, convite } });
       const { error } = await supabase.auth.signInWithPassword({
         email: emailDoCpf(doc),
         password: senha,
