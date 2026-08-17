@@ -23,6 +23,16 @@ export const cadastrarAluno = createServerFn({ method: "POST" })
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
+    const { data: convites } = await supabaseAdmin
+      .from("convites")
+      .select("id")
+      .eq("token", data.convite)
+      .gt("expira_em", new Date().toISOString())
+      .limit(1);
+    if (!convites || convites.length === 0) {
+      throw new Error("Este link de convite expirou. Peça um novo à academia.");
+    }
+
     const { data: existente } = await supabaseAdmin
       .from("profiles")
       .select("id")
