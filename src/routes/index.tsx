@@ -132,14 +132,9 @@ function Login() {
                 {carregando && <Loader2 className="mr-2 size-4 animate-spin" />}
                 Entrar
               </Button>
-              <Link
-                to="/cadastro"
-                className="block rounded-md border border-border py-2.5 text-center text-sm font-bold text-primary"
-              >
-                Criar minha conta
-              </Link>
               <p className="text-center text-xs text-muted-foreground">
-                Recebeu o link da academia? Crie sua conta em 30 segundos.
+                Ainda não tem conta? Peça à academia o link de convite para se
+                cadastrar.
               </p>
             </form>
           </TabsContent>

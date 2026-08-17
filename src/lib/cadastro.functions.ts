@@ -8,6 +8,7 @@ const schema = z.object({
   nome: z.string().trim().min(2).max(80),
   cpf: z.string().min(11).max(20),
   senha: z.string().min(6).max(72),
+  convite: z.string().min(8).max(64),
 });
 
 /**
@@ -21,6 +22,16 @@ export const cadastrarAluno = createServerFn({ method: "POST" })
     if (cpf.length !== 11) throw new Error("Informe um CPF válido com 11 dígitos.");
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: convites } = await supabaseAdmin
+      .from("convites")
+      .select("id")
+      .eq("token", data.convite)
+      .gt("expira_em", new Date().toISOString())
+      .limit(1);
+    if (!convites || convites.length === 0) {
+      throw new Error("Este link de convite expirou. Peça um novo à academia.");
+    }
 
     const { data: existente } = await supabaseAdmin
       .from("profiles")

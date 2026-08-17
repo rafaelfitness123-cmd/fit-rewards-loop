@@ -34,12 +34,15 @@ export default function MapaLeaflet({
   ativo,
   parceiros = [],
   raioM,
+  travado = false,
 }: {
   trilha: CoordMapa[];
   atual: CoordMapa | null;
   ativo: boolean;
   parceiros?: ParceiroMapa[];
   raioM?: number | undefined;
+  /** Modo seguro: mapa só visual, sempre centralizado no aluno e sem toques. */
+  travado?: boolean;
 }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<LeafletMap | null>(null);

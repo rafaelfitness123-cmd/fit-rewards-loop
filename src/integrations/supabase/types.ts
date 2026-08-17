@@ -56,6 +56,27 @@ export type Database = {
         }
         Relationships: []
       }
+      convites: {
+        Row: {
+          criado_em: string
+          expira_em: string
+          id: string
+          token: string
+        }
+        Insert: {
+          criado_em?: string
+          expira_em?: string
+          id?: string
+          token: string
+        }
+        Update: {
+          criado_em?: string
+          expira_em?: string
+          id?: string
+          token?: string
+        }
+        Relationships: []
+      }
       corridas: {
         Row: {
           cliente_id: string
