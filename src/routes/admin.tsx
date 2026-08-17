@@ -28,6 +28,7 @@ export const adminNav = [
   { to: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { to: "/admin/qrcode", label: "QR Code", icon: QrCode, exact: false },
   { to: "/admin/clientes", label: "Clientes", icon: Users, exact: false },
+  { to: "/admin/convites", label: "Convites", icon: Link2, exact: false },
   { to: "/admin/treinos", label: "Treinos", icon: Dumbbell, exact: false },
   { to: "/admin/pontuacao", label: "Pontuação", icon: Star, exact: false },
   { to: "/admin/missoes", label: "Missões", icon: ListChecks, exact: false },

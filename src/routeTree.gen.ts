@@ -16,6 +16,7 @@ import { Route as CadastroRouteImport } from './routes/cadastro'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminClientesRouteImport } from './routes/admin.clientes'
 import { Route as AdminConfiguracoesRouteImport } from './routes/admin.configuracoes'
+import { Route as AdminConvitesRouteImport } from './routes/admin.convites'
 import { Route as AdminMissoesRouteImport } from './routes/admin.missoes'
 import { Route as AdminPontuacaoRouteImport } from './routes/admin.pontuacao'
 import { Route as AdminQrcodeRouteImport } from './routes/admin.qrcode'
@@ -68,6 +69,11 @@ const AdminClientesRoute = AdminClientesRouteImport.update({
 const AdminConfiguracoesRoute = AdminConfiguracoesRouteImport.update({
   id: '/configuracoes',
   path: '/configuracoes',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminConvitesRoute = AdminConvitesRouteImport.update({
+  id: '/convites',
+  path: '/convites',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminMissoesRoute = AdminMissoesRouteImport.update({
@@ -168,6 +174,7 @@ export interface FileRoutesByFullPath {
   '/cadastro': typeof CadastroRoute
   '/admin/clientes': typeof AdminClientesRoute
   '/admin/configuracoes': typeof AdminConfiguracoesRoute
+  '/admin/convites': typeof AdminConvitesRoute
   '/admin/missoes': typeof AdminMissoesRoute
   '/admin/pontuacao': typeof AdminPontuacaoRoute
   '/admin/qrcode': typeof AdminQrcodeRoute
@@ -193,6 +200,7 @@ export interface FileRoutesByTo {
   '/cadastro': typeof CadastroRoute
   '/admin/clientes': typeof AdminClientesRoute
   '/admin/configuracoes': typeof AdminConfiguracoesRoute
+  '/admin/convites': typeof AdminConvitesRoute
   '/admin/missoes': typeof AdminMissoesRoute
   '/admin/pontuacao': typeof AdminPontuacaoRoute
   '/admin/qrcode': typeof AdminQrcodeRoute
@@ -221,6 +229,7 @@ export interface FileRoutesById {
   '/cadastro': typeof CadastroRoute
   '/admin/clientes': typeof AdminClientesRoute
   '/admin/configuracoes': typeof AdminConfiguracoesRoute
+  '/admin/convites': typeof AdminConvitesRoute
   '/admin/missoes': typeof AdminMissoesRoute
   '/admin/pontuacao': typeof AdminPontuacaoRoute
   '/admin/qrcode': typeof AdminQrcodeRoute
@@ -250,6 +259,7 @@ export interface FileRouteTypes {
     | '/cadastro'
     | '/admin/clientes'
     | '/admin/configuracoes'
+    | '/admin/convites'
     | '/admin/missoes'
     | '/admin/pontuacao'
     | '/admin/qrcode'
@@ -275,6 +285,7 @@ export interface FileRouteTypes {
     | '/cadastro'
     | '/admin/clientes'
     | '/admin/configuracoes'
+    | '/admin/convites'
     | '/admin/missoes'
     | '/admin/pontuacao'
     | '/admin/qrcode'
@@ -302,6 +313,7 @@ export interface FileRouteTypes {
     | '/cadastro'
     | '/admin/clientes'
     | '/admin/configuracoes'
+    | '/admin/convites'
     | '/admin/missoes'
     | '/admin/pontuacao'
     | '/admin/qrcode'
@@ -379,6 +391,13 @@ declare module '@tanstack/react-router' {
       path: '/configuracoes'
       fullPath: '/admin/configuracoes'
       preLoaderRoute: typeof AdminConfiguracoesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/convites': {
+      id: '/admin/convites'
+      path: '/convites'
+      fullPath: '/admin/convites'
+      preLoaderRoute: typeof AdminConvitesRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/missoes': {
@@ -513,6 +532,7 @@ declare module '@tanstack/react-router' {
 interface AdminRouteChildren {
   AdminClientesRoute: typeof AdminClientesRoute
   AdminConfiguracoesRoute: typeof AdminConfiguracoesRoute
+  AdminConvitesRoute: typeof AdminConvitesRoute
   AdminMissoesRoute: typeof AdminMissoesRoute
   AdminPontuacaoRoute: typeof AdminPontuacaoRoute
   AdminQrcodeRoute: typeof AdminQrcodeRoute
@@ -526,6 +546,7 @@ interface AdminRouteChildren {
 const AdminRouteChildren: AdminRouteChildren = {
   AdminClientesRoute: AdminClientesRoute,
   AdminConfiguracoesRoute: AdminConfiguracoesRoute,
+  AdminConvitesRoute: AdminConvitesRoute,
   AdminMissoesRoute: AdminMissoesRoute,
   AdminPontuacaoRoute: AdminPontuacaoRoute,
   AdminQrcodeRoute: AdminQrcodeRoute,
