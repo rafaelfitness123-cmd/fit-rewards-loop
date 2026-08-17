@@ -5,6 +5,7 @@ import {
   Dumbbell,
   Gift,
   LayoutDashboard,
+  Link2,
   ListChecks,
   LogOut,
   Menu,
