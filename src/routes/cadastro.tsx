@@ -93,6 +93,33 @@ function Cadastro() {
     }
   };
 
+  if (valido === false) {
+    return (
+      <main className="flex min-h-screen flex-col items-center justify-center gap-6 px-5 py-12 text-center">
+        <div className="flex size-16 items-center justify-center rounded-3xl bg-destructive/15 text-destructive">
+          <ShieldAlert className="size-8" />
+        </div>
+        <div>
+          <h1 className="text-2xl font-black tracking-tight">Convite inválido ou expirado</h1>
+          <p className="mx-auto mt-2 max-w-xs text-sm text-muted-foreground">
+            Os links de cadastro valem 12 horas. Peça um link novo à sua academia.
+          </p>
+        </div>
+        <Link to="/" className="text-sm font-bold text-primary underline">
+          Voltar para o login
+        </Link>
+      </main>
+    );
+  }
+
+  if (valido === null) {
+    return (
+      <main className="flex min-h-screen items-center justify-center">
+        <Loader2 className="size-6 animate-spin text-primary" />
+      </main>
+    );
+  }
+
   return (
     <main className="flex min-h-screen flex-col items-center justify-center gap-8 px-5 py-12">
       <header className="text-center">
