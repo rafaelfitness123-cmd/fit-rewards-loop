@@ -1,16 +1,20 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
-import { Dumbbell, Loader2, UserPlus } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Dumbbell, Loader2, ShieldAlert, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { cadastrarAluno } from "@/lib/cadastro.functions";
+import { verificarConvite } from "@/lib/convites.functions";
 import { emailDoCpf, soDigitos } from "@/lib/cpf";
 import { recarregar } from "@/lib/session";
 
 export const Route = createFileRoute("/cadastro")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    c: typeof search['c'] === "string" ? (search['c'] as string) : "",
+  }),
   head: () => ({
     meta: [
       { title: "Criar conta de aluno — PulseFit" },
