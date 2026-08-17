@@ -8,6 +8,7 @@ const schema = z.object({
   nome: z.string().trim().min(2).max(80),
   cpf: z.string().min(11).max(20),
   senha: z.string().min(6).max(72),
+  convite: z.string().min(8).max(64),
 });
 
 /**
