@@ -85,7 +85,7 @@ export default function MapaPercurso({
     <div
       ref={containerRef}
       style={{ height: altura }}
-      className="w-full overflow-hidden rounded-xl border border-border bg-muted/30"
+      className="relative isolate z-0 w-full overflow-hidden rounded-xl border border-border bg-muted/30"
       aria-label="Percurso da missão no mapa"
     />
   );
