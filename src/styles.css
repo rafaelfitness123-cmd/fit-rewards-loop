@@ -144,3 +144,16 @@
   background-clip: text;
   color: transparent;
 }
+
+/* Mapas (Leaflet) nunca devem cobrir diálogos, menus ou a navegação. */
+.leaflet-container {
+  z-index: 0;
+  isolation: isolate;
+}
+
+.leaflet-pane,
+.leaflet-top,
+.leaflet-bottom,
+.leaflet-control {
+  z-index: 1 !important;
+}
