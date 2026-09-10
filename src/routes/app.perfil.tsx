@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import FotoPublicacao from "@/components/FotoPublicacao";
 import PublicacaoCard from "@/components/PublicacaoCard";
+import Seguidores from "@/components/Seguidores";
 import { listarDoAluno, PAGINA, type Publicacao } from "@/lib/comunidade";
 
 import { getClientes, getMissoes, getResgates, getSessao } from "@/lib/db";
@@ -59,6 +60,7 @@ export const Route = createFileRoute("/app/perfil")({
 function Perfil() {
   const navigate = useNavigate();
   const cliente = useClienteAtual();
+  const [numPosts, setNumPosts] = useState(0);
   const [dados] = useStore(() => {
     const s = getSessao();
     const id = s?.tipo === "cliente" ? s.clienteId : undefined;
