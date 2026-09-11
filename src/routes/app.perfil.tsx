@@ -361,7 +361,15 @@ function PrivacidadeLocalizacao({ clienteId }: { clienteId: string }) {
 }
 
 /** Publicações do próprio aluno — grade de fotos + posts de texto. */
-function MinhasPublicacoes({ meuId, nome }: { meuId: string; nome: string }) {
+function MinhasPublicacoes({
+  meuId,
+  nome,
+  onTotal,
+}: {
+  meuId: string;
+  nome: string;
+  onTotal?: (n: number) => void;
+}) {
   const [posts, setPosts] = useState<Publicacao[]>([]);
   const [pagina, setPagina] = useState(0);
   const [temMais, setTemMais] = useState(true);
