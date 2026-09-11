@@ -381,14 +381,18 @@ function MinhasPublicacoes({
       setCarregando(true);
       try {
         const lote = await listarDoAluno(meuId, p, meuId);
-        setPosts((atuais) => (p === 0 ? lote : [...atuais, ...lote]));
+        setPosts((atuais) => {
+          const novos = p === 0 ? lote : [...atuais, ...lote];
+          onTotal?.(novos.length);
+          return novos;
+        });
         setTemMais(lote.length === PAGINA);
         setPagina(p);
       } finally {
         setCarregando(false);
       }
     },
-    [meuId],
+    [meuId, onTotal],
   );
 
   useEffect(() => {
