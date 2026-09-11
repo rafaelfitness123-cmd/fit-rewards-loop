@@ -388,12 +388,16 @@ function MinhasPublicacoes({
         setCarregando(false);
       }
     },
-    [meuId, onTotal],
+    [meuId],
   );
 
   useEffect(() => {
     void carregar(0);
   }, [carregar]);
+
+  useEffect(() => {
+    onTotal?.(posts.length);
+  }, [posts.length, onTotal]);
 
   const comFoto = posts.filter((p) => p.imagemPath);
 
