@@ -94,54 +94,64 @@ function Perfil() {
 
   return (
     <div className="space-y-4">
-      <section className="hero-surface p-5 text-center">
-        <div className="mx-auto flex size-20 items-center justify-center rounded-3xl bg-primary text-2xl font-black text-primary-foreground">
-          {cliente.avatar ? (
-            <img
-              src={cliente.avatar}
-              alt={`Avatar de ${cliente.nome}`}
-              className="size-20 rounded-3xl object-cover"
-            />
-          ) : (
-            cliente.nome
-              .split(" ")
-              .slice(0, 2)
-              .map((n) => n[0])
-              .join("")
-              .toUpperCase()
-          )}
+      <section className="hero-surface p-4">
+        <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-3">
+          <div className="flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-3xl bg-primary text-xl font-black text-primary-foreground">
+            {cliente.avatar ? (
+              <img
+                src={cliente.avatar}
+                alt={`Avatar de ${cliente.nome}`}
+                className="size-full object-cover"
+              />
+            ) : (
+              cliente.nome
+                .split(" ")
+                .slice(0, 2)
+                .map((n) => n[0])
+                .join("")
+                .toUpperCase()
+            )}
+          </div>
+          <div className="min-w-0">
+            <h1 className="truncate text-lg font-black">{cliente.nome}</h1>
+            <p className="truncate text-[11px] text-muted-foreground">CPF {cliente.cpf}</p>
+          </div>
         </div>
-        <h1 className="mt-3 text-xl font-black">{cliente.nome}</h1>
-        <p className="text-xs text-muted-foreground">CPF {cliente.cpf}</p>
+
+        <div className="mt-4 rounded-2xl bg-background/40 py-2.5">
+          <Seguidores alunoId={cliente.id} meuId={cliente.id} publicacoes={numPosts} />
+        </div>
       </section>
 
-      <section className="grid grid-cols-3 gap-2">
+      <section className="surface grid grid-cols-3 gap-x-2 gap-y-3 p-3">
         {stats.map((s) => (
-          <div key={s.label} className="surface p-3 text-center">
-            <s.icon className="mx-auto size-4 text-primary" />
-            <p className="mt-1 text-sm font-black">{s.valor}</p>
-            <p className="text-[10px] text-muted-foreground">{s.label}</p>
+          <div key={s.label} className="flex min-w-0 items-center gap-2">
+            <s.icon className="size-4 shrink-0 text-primary" />
+            <div className="min-w-0">
+              <p className="truncate text-sm font-black leading-tight">{s.valor}</p>
+              <p className="truncate text-[10px] text-muted-foreground">{s.label}</p>
+            </div>
           </div>
         ))}
       </section>
 
       <Tabs defaultValue="publicacoes">
-        <TabsList className="w-full">
-          <TabsTrigger value="publicacoes" className="flex-1 text-xs">
-            Publicações
-          </TabsTrigger>
-          <TabsTrigger value="treinos" className="flex-1 text-xs">
-            Treinos
-          </TabsTrigger>
-          <TabsTrigger value="pontos" className="flex-1 text-xs">
-            Pontos
-          </TabsTrigger>
-          <TabsTrigger value="missoes" className="flex-1 text-xs">
-            Missões
-          </TabsTrigger>
-          <TabsTrigger value="resgates" className="flex-1 text-xs">
-            Resgates
-          </TabsTrigger>
+        <TabsList className="flex h-auto w-full gap-1 overflow-x-auto rounded-full bg-muted/50 p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {[
+            ["publicacoes", "Publicações"],
+            ["treinos", "Treinos"],
+            ["pontos", "Pontos"],
+            ["missoes", "Missões"],
+            ["resgates", "Resgates"],
+          ].map(([v, label]) => (
+            <TabsTrigger
+              key={v}
+              value={v as string}
+              className="shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+            >
+              {label}
+            </TabsTrigger>
+          ))}
         </TabsList>
 
         <TabsContent value="publicacoes" className="space-y-3 pt-4">
@@ -150,8 +160,13 @@ function Perfil() {
               <Plus className="mr-2 size-4" /> Criar publicação
             </Link>
           </Button>
-          <MinhasPublicacoes meuId={cliente.id} nome={cliente.nome} />
+          <MinhasPublicacoes
+            meuId={cliente.id}
+            nome={cliente.nome}
+            onTotal={setNumPosts}
+          />
         </TabsContent>
+
 
 
         <TabsContent value="treinos" className="space-y-2 pt-4">
